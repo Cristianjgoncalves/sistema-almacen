@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>El Almacén v16 - Cierre de Caja</title>
+    <title>El Almacén v16 - Gestión de Stock</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -59,17 +58,14 @@
                             </div>
                         `).join('')}
                     </div>
-                    
                     <div class="w-96 bg-white rounded-[32px] shadow-xl p-6 flex flex-col border border-blue-50">
                         <h2 class="font-black text-[10px] text-gray-400 uppercase tracking-widest mb-4 italic text-center">Ticket Actual</h2>
                         <div id="cart-list" class="flex-1 overflow-y-auto space-y-2 mb-4"></div>
-                        
                         <div class="pt-4 border-t border-dashed bg-gray-50 p-4 rounded-2xl space-y-3">
                             <div class="flex justify-between items-center text-2xl font-black text-blue-900">
                                 <span>TOTAL</span>
                                 <span id="total-txt">$0.00</span>
                             </div>
-                            
                             <div class="flex items-center justify-between gap-2 pt-2 border-t">
                                 <span class="text-[10px] font-black text-gray-400 uppercase">Paga con:</span>
                                 <div class="relative">
@@ -78,12 +74,10 @@
                                         class="w-28 pl-5 pr-2 py-1.5 border-2 border-blue-100 rounded-xl font-black text-right text-blue-600 outline-none focus:border-blue-500 transition text-sm">
                                 </div>
                             </div>
-
                             <div class="flex justify-between items-center text-lg font-black text-green-600">
                                 <span class="text-[10px] uppercase">Vuelto:</span>
                                 <span id="vuelto-txt">$0.00</span>
                             </div>
-
                             <div class="grid grid-cols-2 gap-2 mt-2">
                                 <button onclick="procesarVenta(true)" class="bg-blue-600 text-white py-4 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-blue-700 transition">Imprimir</button>
                                 <button onclick="procesarVenta(false)" class="bg-gray-400 text-white py-4 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-gray-500 transition">Solo Cobrar</button>
@@ -138,18 +132,8 @@
         function procesarVenta(debeImprimir) {
             if (carrito.length === 0) return;
             const totalVenta = carrito.reduce((s, i) => s + (i.precio * i.cantidad), 0);
-            const pagoInput = document.getElementById('pago-input').value;
-            const pago = pagoInput === "" ? totalVenta : parseFloat(pagoInput);
-
-            if (debeImprimir) {
-                const win = window.open('', '_blank');
-                win.document.write(`<html><body style="font-family:monospace;width:240px;text-transform:uppercase;font-size:11px;padding:10px;">
-                    <center><b>EL ALMACÉN</b><hr>${carrito.map(i => `<p>${i.nombre}<br>${i.cantidad} x $${i.precio} <span style="float:right">$${(i.precio*i.cantidad).toFixed(2)}</span></p>`).join('')}<hr>
-                    <b>TOTAL: $${totalVenta.toFixed(2)}</b>${pagoInput !== "" ? `<br>PAGA: $${pago.toFixed(2)}<br>VUELTO: $${(pago-totalVenta).toFixed(2)}` : ''}<hr>¡GRACIAS!</center>
-                    <script>window.onload=function(){window.print();window.close();}<\/script></body></html>`);
-            }
-
             const costoVenta = carrito.reduce((s, i) => s + (i.costo * i.cantidad), 0);
+
             carrito.forEach(item => {
                 const p = productos.find(x => x.id === item.id);
                 if (p) p.stock = parseFloat((p.stock - item.cantidad).toFixed(2));
@@ -162,9 +146,67 @@
             
             carrito = [];
             showSection('pos');
+            alert("Venta realizada con éxito");
         }
 
-        // --- REPORTES Y CIERRE ---
+        // --- INVENTARIO (CORREGIDO SIN PROMPT) ---
+        function renderInventory(container) {
+            container.innerHTML = `
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black uppercase italic text-blue-600">Gestión de Stock</h2>
+                </div>
+                
+                <div class="bg-white p-6 rounded-[32px] shadow-sm border border-blue-50 mb-8">
+                    <p class="text-[10px] font-black text-gray-400 uppercase mb-4 tracking-widest italic">Cargar Nuevo Producto</p>
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                        <input type="text" id="inv-nombre" placeholder="Nombre" class="p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm font-bold">
+                        <input type="number" id="inv-costo" placeholder="Costo $" class="p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm font-bold">
+                        <input type="number" id="inv-precio" placeholder="Venta $" class="p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm font-bold">
+                        <input type="number" id="inv-stock" placeholder="Stock" class="p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm font-bold">
+                        <button onclick="guardarProducto()" class="bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition shadow-lg">Guardar</button>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    ${productos.map(p => `
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border flex justify-between items-center">
+                            <div class="w-1/2 font-black text-xs uppercase text-gray-700">${p.nombre}</div>
+                            <div class="text-center">
+                                <span class="text-[8px] font-bold text-gray-300 uppercase block">Precio</span>
+                                <span class="font-black text-blue-600">$${p.precio.toFixed(2)}</span>
+                            </div>
+                            <div class="text-center">
+                                <span class="text-[8px] font-bold text-gray-300 uppercase block">Stock</span>
+                                <span class="font-black text-gray-500">${p.stock}</span>
+                            </div>
+                            <button onclick="borrarProducto(${p.id})" class="text-red-200 hover:text-red-500 transition text-lg"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `).join('')}
+                </div>`;
+        }
+
+        function guardarProducto() {
+            const nom = document.getElementById('inv-nombre').value;
+            const cos = parseFloat(document.getElementById('inv-costo').value) || 0;
+            const pre = parseFloat(document.getElementById('inv-precio').value) || 0;
+            const sto = parseFloat(document.getElementById('inv-stock').value) || 0;
+
+            if (!nom) { alert("¡Falta el nombre!"); return; }
+
+            productos.push({ id: Date.now(), nombre: nom.toUpperCase(), costo: cos, precio: pre, stock: sto });
+            localStorage.setItem('productos', JSON.stringify(productos));
+            showSection('inventory');
+        }
+
+        function borrarProducto(id) {
+            if(confirm("¿Eliminar este producto?")) {
+                productos = productos.filter(x => x.id !== id);
+                localStorage.setItem('productos', JSON.stringify(productos));
+                showSection('inventory');
+            }
+        }
+
+        // --- REPORTES ---
         function renderReports(container) {
             const h = JSON.parse(localStorage.getItem('historial_ventas')) || [];
             const resumen = h.reduce((acc, curr) => {
@@ -175,114 +217,17 @@
                 return acc;
             }, {});
 
-            const hoy = new Date().toLocaleDateString();
-            const dataHoy = resumen[hoy] || { total: 0, ganancia: 0, cantidad: 0 };
-
             container.innerHTML = `
-                <div class="flex justify-between items-center mb-8">
-                    <div>
-                        <h2 class="text-2xl font-black uppercase text-blue-600 italic">Control de Caja</h2>
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Resumen de actividad diaria</p>
-                    </div>
-                    <button onclick="finalizarTurno('${hoy}', ${dataHoy.ganancia})" class="bg-red-500 text-white px-8 py-4 rounded-2xl font-black shadow-lg hover:bg-red-600 transition uppercase text-xs tracking-widest">
-                        <i class="fas fa-power-off mr-2"></i> Finalizar Día
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-white p-6 rounded-[32px] shadow-sm border border-blue-50">
-                        <p class="text-[10px] font-black text-gray-400 uppercase mb-1">Ventas Hoy</p>
-                        <p class="text-3xl font-black text-blue-900">$${dataHoy.total.toFixed(2)}</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-[32px] shadow-sm border border-green-50">
-                        <p class="text-[10px] font-black text-gray-400 uppercase mb-1">Ganancia Neta</p>
-                        <p class="text-3xl font-black text-green-600">$${dataHoy.ganancia.toFixed(2)}</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-[32px] shadow-sm border border-orange-50">
-                        <p class="text-[10px] font-black text-gray-400 uppercase mb-1">Cant. Operaciones</p>
-                        <p class="text-3xl font-black text-orange-500">${dataHoy.cantidad}</p>
-                    </div>
-                </div>
-
-                <h3 class="font-black text-[10px] uppercase text-gray-400 mb-4 tracking-widest italic">Historial de Días Anteriores</h3>
+                <h2 class="text-2xl font-black uppercase text-blue-600 italic mb-6">Reportes de Venta</h2>
                 <div class="space-y-3">
                     ${Object.keys(resumen).reverse().map(dia => `
                         <div class="bg-white p-5 rounded-2xl shadow-sm border flex justify-between items-center">
                             <div class="font-black text-sm text-gray-600 w-32">${dia}</div>
-                            <div class="text-center">
-                                <span class="text-[9px] font-bold text-gray-300 uppercase block">Ventas</span>
-                                <span class="font-black text-gray-700">$${resumen[dia].total.toFixed(2)}</span>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-[9px] font-bold text-green-300 uppercase block">Ganancia</span>
-                                <span class="font-black text-green-600">$${resumen[dia].ganancia.toFixed(2)}</span>
-                            </div>
+                            <div class="font-black text-gray-700">Total: $${resumen[dia].total.toFixed(2)}</div>
+                            <div class="font-black text-green-600">Ganancia: $${resumen[dia].ganancia.toFixed(2)}</div>
                         </div>
                     `).join('')}
-                </div>
-            `;
-        }
-
-        function finalizarTurno(fecha, ganancia) {
-            if (ganancia === 0) {
-                alert("No hay ventas registradas para cerrar el día.");
-                return;
-            }
-            if (confirm(`CIERRE DE DÍA: ${fecha}\n\nGANANCIA TOTAL: $${ganancia.toFixed(2)}\n\n¿Confirmas el cierre de caja?`)) {
-                // Aquí podrías enviar los datos a un correo o base de datos.
-                // Por ahora, solo confirmamos visualmente.
-                alert(`Cierre exitoso. Ganancia de $${ganancia.toFixed(2)} archivada.`);
-                showSection('reports');
-            }
-        }
-
-        // --- INVENTARIO ---
-        function renderInventory(container) {
-            container.innerHTML = `
-                <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-black uppercase italic">Inventario</h2>
-                <button onclick="agregarNuevo()" class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold">+ PRODUCTO</button></div>
-                <div class="space-y-2">${productos.map(p => `
-                    <div class="bg-white p-4 rounded-xl shadow-sm border flex justify-between items-center">
-                        <div class="w-1/2 font-black text-xs uppercase text-gray-700">${p.nombre}</div>
-                        <div class="font-black text-blue-600">${p.stock} ${p.unidad}</div>
-                        <div class="flex gap-2">
-                            <button onclick="editarProducto(${p.id})" class="text-gray-300 hover:text-blue-500"><i class="fas fa-edit"></i></button>
-                            <button onclick="borrarProducto(${p.id})" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
-                `).join('')}</div>`;
-        }
-
-      function agregarNuevo() {
-    const n = prompt("Nombre del producto:"); 
-    if (!n) return; // Si cancelas, no hace nada
-
-    const nuevoProducto = { 
-        id: Date.now(), 
-        nombre: n.toUpperCase(), 
-        costo: parseFloat(prompt("Costo de compra:", "0")) || 0, 
-        precio: parseFloat(prompt("Precio de venta:", "0")) || 0, 
-        stock: parseFloat(prompt("Stock inicial:", "0")) || 0, 
-        unidad: prompt("Unidad (kg, u, pack):", "un") || "un" 
-    };
-
-    productos.push(nuevoProducto);
-    localStorage.setItem('productos', JSON.stringify(productos));
-    showSection('inventory');
-}
-
-        function editarProducto(id) {
-            const p = productos.find(x => x.id === id);
-            p.nombre = prompt("Nombre:", p.nombre);
-            p.costo = parseFloat(prompt("Costo:", p.costo));
-            p.precio = parseFloat(prompt("Venta:", p.precio));
-            p.stock = parseFloat(prompt("Stock:", p.stock));
-            localStorage.setItem('productos', JSON.stringify(productos));
-            showSection('inventory');
-        }
-
-        function borrarProducto(id) {
-            if(confirm("¿Eliminar?")) { productos = productos.filter(x => x.id !== id); localStorage.setItem('productos', JSON.stringify(productos)); showSection('inventory'); }
+                </div>`;
         }
 
         function filtrarProductos() { filtroActual = document.getElementById('buscador').value.toLowerCase(); showSection('pos'); }
