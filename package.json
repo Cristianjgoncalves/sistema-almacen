@@ -1,7 +1,6 @@
 {
   "name": "el-almacen-v16",
   "version": "1.0.0",
-  "description": "Sistema de gestión para El Almacén",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -12,11 +11,9 @@
     "electron-builder": "^24.9.1"
   },
   "build": {
-    "appId": "com.almacen.repostero",
-    "productName": "ElAlmacenRepostero",
+    "appId": "com.almacen.v16",
     "win": {
-      "target": "portable",
-      "icon": "icon.ico"
+      "target": "portable"
     }
   }
 }
