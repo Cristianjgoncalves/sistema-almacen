@@ -253,12 +253,23 @@
                 `).join('')}</div>`;
         }
 
-        function agregarNuevo() {
-            const n = prompt("Nombre:"); if (!n) return;
-            productos.push({ id: Date.now(), nombre: n, costo: parseFloat(prompt("Costo:", "0")), precio: parseFloat(prompt("Venta:", "0")), stock: parseFloat(prompt("Stock:", "0")), unidad: prompt("Unidad:", "kg") });
-            localStorage.setItem('productos', JSON.stringify(productos));
-            showSection('inventory');
-        }
+      function agregarNuevo() {
+    const n = prompt("Nombre del producto:"); 
+    if (!n) return; // Si cancelas, no hace nada
+
+    const nuevoProducto = { 
+        id: Date.now(), 
+        nombre: n.toUpperCase(), 
+        costo: parseFloat(prompt("Costo de compra:", "0")) || 0, 
+        precio: parseFloat(prompt("Precio de venta:", "0")) || 0, 
+        stock: parseFloat(prompt("Stock inicial:", "0")) || 0, 
+        unidad: prompt("Unidad (kg, u, pack):", "un") || "un" 
+    };
+
+    productos.push(nuevoProducto);
+    localStorage.setItem('productos', JSON.stringify(productos));
+    showSection('inventory');
+}
 
         function editarProducto(id) {
             const p = productos.find(x => x.id === id);
