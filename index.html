@@ -10,6 +10,7 @@
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+        input:focus { background-color: #eff6ff; }
     </style>
 </head>
 <body class="bg-gray-100 h-screen flex overflow-hidden font-sans text-gray-800">
@@ -72,12 +73,9 @@
                                 <span id="total-txt">$0.00</span>
                             </div>
                             <div class="flex items-center justify-between gap-2 pt-2 border-t">
-                                <span class="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Paga con:</span>
-                                <div class="relative">
-                                    <span class="absolute left-2 top-2 text-gray-400 font-bold text-xs">$</span>
-                                    <input type="number" id="pago-input" oninput="calcularVuelto()" placeholder="Monto" 
-                                        class="w-28 pl-5 pr-2 py-1.5 border-2 border-blue-100 rounded-xl font-black text-right text-blue-600 outline-none focus:border-blue-500 transition text-sm">
-                                </div>
+                                <span class="text-[10px] font-black text-gray-400 uppercase">Paga con:</span>
+                                <input type="number" id="pago-input" oninput="calcularVuelto()" placeholder="$" 
+                                    class="w-28 p-1.5 border-2 border-blue-100 rounded-xl font-black text-right text-blue-600 outline-none focus:border-blue-500 transition text-sm">
                             </div>
                             <div class="flex justify-between items-center text-lg font-black text-green-600">
                                 <span class="text-[10px] uppercase">Vuelto:</span>
@@ -109,7 +107,7 @@
             const list = document.getElementById('cart-list');
             if (!list) return;
             list.innerHTML = carrito.map((i, index) => `
-                <div class="bg-white p-2 rounded-xl border border-gray-100 flex justify-between items-center">
+                <div class="bg-white p-2 rounded-xl border border-gray-100 flex justify-between items-center animate-in fade-in duration-300">
                     <div class="w-1/2 font-black text-[10px] uppercase text-gray-600 truncate">${i.nombre}</div>
                     <input type="number" value="${i.cantidad}" onchange="actualizarCantidad(${index}, this.value)" class="w-10 text-center text-xs font-black bg-gray-50 rounded">
                     <span class="font-black text-xs text-gray-800">$${(i.precio * i.cantidad).toFixed(2)}</span>
@@ -144,7 +142,12 @@
             });
 
             const h = JSON.parse(localStorage.getItem('historial_ventas')) || [];
-            h.push({ fecha: new Date().toLocaleDateString(), hora: new Date().toLocaleTimeString(), total: totalVenta, costo: costoVenta, ganancia: totalVenta - costoVenta });
+            h.push({ 
+                fecha: new Date().toLocaleDateString(), 
+                total: totalVenta, 
+                costo: costoVenta, 
+                ganancia: totalVenta - costoVenta 
+            });
             localStorage.setItem('historial_ventas', JSON.stringify(h));
             localStorage.setItem('productos', JSON.stringify(productos));
             
@@ -153,19 +156,19 @@
                 win.document.write(`<html><body style="font-family:monospace;width:240px;font-size:12px;text-align:center;">
                     <b>EL ALMACÉN DEL REPOSTERO</b><br>Sarmiento 2201<hr>
                     ${carrito.map(i => `${i.nombre}<br>${i.cantidad} x $${i.precio} = $${(i.precio*i.cantidad).toFixed(2)}`).join('<br>')}<hr>
-                    <b>TOTAL: $${totalVenta.toFixed(2)}</b><br>¡Gracias por su compra!
+                    <b>TOTAL: $${totalVenta.toFixed(2)}</b><br>¡Gracias!
                     <script>window.print();window.close();<\/script></body></html>`);
             }
 
             carrito = [];
             showSection('pos');
-            alert("¡Venta cobrada!");
+            alert("¡Venta Exitosa!");
         }
 
-        // --- INVENTARIO ---
+        // --- INVENTARIO (CORREGIDO CON TABULACIÓN Y GUARDADO DINÁMICO) ---
         function renderInventory(container) {
             container.innerHTML = `
-                <h2 class="text-2xl font-black uppercase italic text-blue-600 mb-6">Inventario y Precios</h2>
+                <h2 class="text-2xl font-black uppercase italic text-blue-600 mb-6 text-center md:text-left">Inventario y Precios</h2>
                 
                 <div class="bg-white p-6 rounded-[32px] shadow-sm border border-blue-50 mb-8">
                     <p class="text-[10px] font-black text-gray-400 uppercase mb-4 tracking-widest italic">Cargar Nuevo Producto</p>
@@ -178,34 +181,41 @@
                     </div>
                 </div>
 
-                <div class="space-y-2">
+                <div class="space-y-2 pb-10">
                     <div class="hidden md:grid grid-cols-6 px-6 text-[10px] font-black text-gray-400 uppercase mb-2">
                         <div class="col-span-2">Producto</div>
                         <div>Costo ($)</div>
                         <div>Venta ($)</div>
                         <div>Stock</div>
-                        <div class="text-right">Guardar</div>
+                        <div class="text-right">Acción</div>
                     </div>
                     ${productos.map((p, index) => `
                         <div class="bg-white p-3 rounded-2xl shadow-sm border flex flex-col md:grid md:grid-cols-6 gap-3 items-center">
                             <div class="col-span-2 w-full font-black text-xs uppercase text-gray-700">${p.nombre}</div>
-                            <input type="number" value="${p.costo}" onchange="editLocal(${index}, 'costo', this.value)" class="w-full p-2 border rounded-lg text-xs font-black text-orange-600">
-                            <input type="number" value="${p.precio}" onchange="editLocal(${index}, 'precio', this.value)" class="w-full p-2 border rounded-lg text-xs font-black text-blue-600">
-                            <input type="number" value="${p.stock}" onchange="editLocal(${index}, 'stock', this.value)" class="w-full p-2 border rounded-lg text-xs font-black text-gray-500">
+                            <input type="number" value="${p.costo}" oninput="editLocal(${index}, 'costo', this.value)" 
+                                class="w-full p-2 border border-gray-100 rounded-lg text-xs font-black text-orange-600 outline-none focus:border-blue-500">
+                            <input type="number" value="${p.precio}" oninput="editLocal(${index}, 'precio', this.value)" 
+                                class="w-full p-2 border border-gray-100 rounded-lg text-xs font-black text-blue-600 outline-none focus:border-blue-500">
+                            <input type="number" value="${p.stock}" oninput="editLocal(${index}, 'stock', this.value)" 
+                                class="w-full p-2 border border-gray-100 rounded-lg text-xs font-black text-gray-500 outline-none focus:border-blue-500">
                             <div class="flex justify-end gap-2 w-full">
-                                <button onclick="saveAll()" class="bg-green-100 text-green-600 p-2 rounded-lg hover:bg-green-500 hover:text-white transition"><i class="fas fa-save"></i></button>
-                                <button onclick="borrarProducto(${p.id})" class="bg-red-50 text-red-200 p-2 rounded-lg hover:bg-red-500 hover:text-white transition"><i class="fas fa-trash"></i></button>
+                                <button onclick="saveAll()" class="bg-green-100 text-green-600 p-2 rounded-lg hover:bg-green-500 hover:text-white transition"><i class="fas fa-check"></i></button>
+                                <button onclick="borrarProducto(${p.id})" class="bg-red-50 text-red-300 p-2 rounded-lg hover:bg-red-500 hover:text-white transition"><i class="fas fa-trash"></i></button>
                             </div>
                         </div>
                     `).join('')}
                 </div>`;
         }
 
-        function editLocal(index, campo, valor) { productos[index][campo] = parseFloat(valor) || 0; }
+        function editLocal(index, campo, valor) { 
+            productos[index][campo] = parseFloat(valor) || 0; 
+            // Guardado automático silencioso al cambiar datos
+            localStorage.setItem('productos', JSON.stringify(productos));
+        }
         
         function saveAll() {
             localStorage.setItem('productos', JSON.stringify(productos));
-            alert("¡Cambios guardados!");
+            alert("¡Datos guardados!");
             showSection('inventory');
         }
 
@@ -226,28 +236,36 @@
             }
         }
 
-        // --- REPORTES ---
+        // --- REPORTES (CORREGIDO: AHORA MUESTRA CANTIDAD DE VENTAS) ---
         function renderReports(container) {
             const h = JSON.parse(localStorage.getItem('historial_ventas')) || [];
             const resumen = h.reduce((acc, curr) => {
                 if (!acc[curr.fecha]) acc[curr.fecha] = { total: 0, ganancia: 0, cantidad: 0 };
                 acc[curr.fecha].total += curr.total;
                 acc[curr.fecha].ganancia += curr.ganancia;
-                acc[curr.fecha].cantidad += 1;
+                acc[curr.fecha].cantidad += 1; // Aquí sumamos cada operación
                 return acc;
             }, {});
 
             container.innerHTML = `
-                <h2 class="text-2xl font-black uppercase text-blue-600 italic mb-6">Balance Diario</h2>
+                <h2 class="text-2xl font-black uppercase text-blue-600 italic mb-6">Resumen de Ventas</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                    <button onclick="localStorage.removeItem('historial_ventas'); showSection('reports')" class="bg-red-50 text-red-500 p-4 rounded-2xl font-bold text-xs uppercase border border-red-100">Limpiar Historial</button>
+                    <button onclick="if(confirm('¿Borrar historial?')) { localStorage.removeItem('historial_ventas'); showSection('reports'); }" 
+                        class="bg-red-50 text-red-500 p-4 rounded-2xl font-bold text-xs uppercase border border-red-100 hover:bg-red-500 hover:text-white transition">Vaciar Historial</button>
                 </div>
                 <div class="space-y-3">
+                    <div class="hidden md:grid grid-cols-4 px-6 text-[10px] font-black text-gray-400 uppercase">
+                        <div>Fecha</div>
+                        <div class="text-center">Ventas Realizadas</div>
+                        <div class="text-center">Total Bruto</div>
+                        <div class="text-right">Ganancia Neta</div>
+                    </div>
                     ${Object.keys(resumen).reverse().map(dia => `
-                        <div class="bg-white p-5 rounded-2xl shadow-sm border flex justify-between items-center">
-                            <div class="font-black text-sm text-gray-600 w-32">${dia}</div>
-                            <div class="text-center"><span class="block text-[8px] text-gray-400">VENTAS</span><span class="font-black">$${resumen[dia].total.toFixed(2)}</span></div>
-                            <div class="text-right"><span class="block text-[8px] text-gray-400">GANANCIA NETA</span><span class="font-black text-green-600">$${resumen[dia].ganancia.toFixed(2)}</span></div>
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border flex flex-col md:grid md:grid-cols-4 gap-4 items-center">
+                            <div class="font-black text-sm text-gray-600 w-full md:w-auto">${dia}</div>
+                            <div class="text-center bg-blue-50 px-3 py-1 rounded-full"><span class="font-black text-blue-600">${resumen[dia].cantidad} ventas</span></div>
+                            <div class="text-center"><span class="font-black text-gray-700">$${resumen[dia].total.toFixed(2)}</span></div>
+                            <div class="text-right w-full md:w-auto font-black text-green-600">$${resumen[dia].ganancia.toFixed(2)}</div>
                         </div>
                     `).join('')}
                 </div>`;
