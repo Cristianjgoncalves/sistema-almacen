@@ -6,15 +6,18 @@ function createWindow() {
     width: 1280,
     height: 800,
     title: "El Almacén del Repostero",
-    icon: path.join(__dirname, 'icon.ico'), // Opcional si tienes icono
-    autoHideMenuBar: true, // Esto oculta el menú "File, Edit, etc."
+    autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true
     }
   });
 
-  win.loadFile('index.html');
+  // Esta línea es la que corregimos para que encuentre el archivo sí o sí
+  win.loadFile(path.join(__dirname, 'index.html'));
+
+  // OPCIONAL: Descomentá la línea de abajo si querés ver qué error tira (consola)
+  // win.webContents.openDevTools();
 }
 
 app.whenReady().then(createWindow);
