@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>El Almacén v64 - Control de Cursor</title>
+    <title>El Almacén v65 - Sistema de Usuarios</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -22,58 +22,72 @@
 </head>
 <body class="h-screen flex overflow-hidden">
 
-    <div id="modal-pass" class="hidden fixed inset-0 bg-black/70 z-[100] flex items-center justify-center backdrop-blur-md">
-        <div class="bg-white p-10 rounded-[3rem] shadow-2xl text-center w-96 border-4 border-blue-600">
-            <i class="fas fa-lock text-blue-600 text-5xl mb-6"></i>
-            <h3 class="font-black uppercase text-xl mb-4">Acceso Reservado</h3>
-            <input type="password" id="pass-input" placeholder="CLAVE" 
-                class="w-full p-5 border-4 border-gray-100 rounded-2xl mb-6 text-center font-black text-3xl outline-none focus:border-blue-600 bg-gray-50 text-blue-900">
-            <div class="flex gap-4">
-                <button onclick="cerrarModal()" class="flex-1 bg-gray-200 py-4 rounded-2xl font-black text-xs uppercase">Cancelar</button>
-                <button onclick="validarPass()" class="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-black text-xs uppercase shadow-lg">Entrar</button>
+    <div id="login-screen" class="fixed inset-0 bg-blue-600 z-[200] flex items-center justify-center p-4">
+        <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-md text-center">
+            <div class="bg-blue-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-store text-blue-600 text-4xl"></i>
             </div>
+            <h2 class="text-2xl font-black text-gray-800 uppercase mb-2">Bienvenido</h2>
+            <p class="text-gray-400 text-xs font-bold uppercase mb-8 tracking-widest text-center text-center text-center">Inicie sesión para continuar</p>
+            
+            <div class="space-y-4">
+                <div class="relative">
+                    <i class="fas fa-user absolute left-5 top-5 text-gray-300"></i>
+                    <input type="text" id="user-input" placeholder="USUARIO" class="w-full p-5 pl-12 bg-gray-50 border-2 border-gray-100 rounded-2xl font-black outline-none focus:border-blue-500 transition-all text-center">
+                </div>
+                <div class="relative">
+                    <i class="fas fa-lock absolute left-5 top-5 text-gray-300"></i>
+                    <input type="password" id="pass-login" placeholder="CONTRASEÑA" class="w-full p-5 pl-12 bg-gray-50 border-2 border-gray-100 rounded-2xl font-black outline-none focus:border-blue-500 transition-all text-center">
+                </div>
+                <button onclick="intentarLogin()" class="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black uppercase shadow-xl hover:bg-blue-700 transition-all active:scale-95 text-center">Entrar al Sistema</button>
+            </div>
+            <p class="mt-6 text-[10px] font-bold text-gray-300 uppercase tracking-tighter">El Almacén del Repostero v65</p>
         </div>
     </div>
 
-    <div class="w-72 bg-white shadow-xl flex flex-col z-20 text-center border-r">
-        <div class="p-6 border-b border-gray-100 relative">
-            <div class="relative inline-block">
-                <img id="app-logo" src="OIP.webp" alt="Logo" class="mx-auto mb-4 w-32 h-32 rounded-full shadow-lg border-2 border-blue-50 object-cover">
-                <label class="absolute bottom-4 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer">
+    <div id="sidebar" class="hidden w-72 bg-white shadow-xl flex flex-col z-20 text-center border-r">
+        <div class="p-6 border-b border-gray-100 relative text-center">
+            <div class="relative inline-block text-center">
+                <img id="app-logo" src="OIP.webp" alt="Logo" class="mx-auto mb-4 w-32 h-32 rounded-full shadow-lg border-2 border-blue-50 object-cover text-center">
+                <label id="btn-logo-edit" class="absolute bottom-4 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hidden">
                     <i class="fas fa-camera text-xs"></i>
                     <input type="file" class="hidden" onchange="cambiarLogo(event)">
                 </label>
             </div>
-            <h1 id="ui-nombre-local" class="text-lg font-black text-blue-600 uppercase tracking-tighter leading-tight"></h1>
-            <div class="mt-2 space-y-1">
+            <h1 id="ui-nombre-local" class="text-lg font-black text-blue-600 uppercase tracking-tighter leading-tight text-center"></h1>
+            <div class="mt-2 space-y-1 text-center">
                 <p id="ui-dir1" class="text-[8px] text-gray-400 font-bold uppercase italic tracking-tighter text-center"></p>
-                <p id="ui-dir2" class="text-[8px] text-gray-400 font-bold uppercase italic tracking-tighter text-center"></p>
+                <p id="ui-dir2" class="text-[8px] text-gray-400 font-bold uppercase italic tracking-tighter text-center text-center"></p>
             </div>
         </div>
-        <nav class="flex-1 px-4 py-4 space-y-1">
+        <nav class="flex-1 px-4 py-4 space-y-1 text-center">
             <button onclick="showSection('pos')" class="w-full flex items-center p-4 hover:bg-blue-50 rounded-2xl transition font-bold text-gray-600"><i class="fas fa-cash-register mr-3 text-blue-500"></i> Ventas</button>
-            <button onclick="abrirModalPass('inventory')" class="w-full flex items-center p-4 hover:bg-blue-50 rounded-2xl transition font-bold text-gray-600"><i class="fas fa-boxes mr-3 text-blue-500"></i> Inventario</button>
-            <button onclick="abrirModalPass('reports')" class="w-full flex items-center p-4 hover:bg-blue-50 rounded-2xl transition font-bold text-gray-600"><i class="fas fa-file-invoice-dollar mr-3 text-blue-500"></i> Auditoría</button>
+            <button id="nav-inventory" onclick="showSection('inventory')" class="w-full flex items-center p-4 hover:bg-blue-50 rounded-2xl transition font-bold text-gray-600 hidden"><i class="fas fa-boxes mr-3 text-blue-500"></i> Inventario</button>
+            <button id="nav-reports" onclick="showSection('reports')" class="w-full flex items-center p-4 hover:bg-blue-50 rounded-2xl transition font-bold text-gray-600 hidden"><i class="fas fa-file-invoice-dollar mr-3 text-blue-500"></i> Auditoría</button>
             <button onclick="showSection('totals')" class="w-full flex items-center p-4 hover:bg-blue-50 rounded-2xl transition font-bold text-gray-600"><i class="fas fa-chart-line mr-3 text-blue-500"></i> Totales Diarios</button>
             <button onclick="showSection('weekly')" class="w-full flex items-center p-4 hover:bg-blue-50 rounded-2xl transition font-bold text-gray-600"><i class="fas fa-list-ol mr-3 text-yellow-500"></i> Prod. Semanal</button>
-            <button onclick="abrirModalPass('config')" class="w-full flex items-center p-4 hover:bg-blue-50 rounded-2xl transition font-bold text-gray-600"><i class="fas fa-cog mr-3 text-gray-500"></i> Configuración</button>
+            <button id="nav-config" onclick="showSection('config')" class="w-full flex items-center p-4 hover:bg-blue-50 rounded-2xl transition font-bold text-gray-600 hidden"><i class="fas fa-cog mr-3 text-gray-500"></i> Configuración</button>
         </nav>
-        <div class="p-4 border-t text-center"><div id="reloj" class="text-[10px] font-black text-blue-900 uppercase"></div></div>
+        <div class="p-4 border-t text-center">
+            <button onclick="logout()" class="text-[10px] font-black text-red-400 uppercase hover:text-red-600 transition text-center">
+                <i class="fas fa-sign-out-alt mr-1 text-center"></i> Cerrar Sesión
+            </button>
+            <div id="reloj" class="text-[10px] font-black text-blue-900 uppercase mt-2 text-center text-center"></div>
+        </div>
     </div>
 
-    <div class="flex-1 flex flex-col overflow-hidden text-center">
-        <header class="bg-white p-6 shadow-sm border-b px-10">
-            <div class="relative w-full max-w-lg mx-auto">
+    <div id="main-area" class="hidden flex-1 flex flex-col overflow-hidden text-center text-center">
+        <header class="bg-white p-6 shadow-sm border-b px-10 text-center text-center">
+            <div class="relative w-full max-w-lg mx-auto text-center">
                 <i class="fas fa-search absolute left-4 top-4 text-gray-400"></i>
-                <input type="text" id="buscador" onkeyup="filtrarProductos()" placeholder="Buscar productos..." class="w-full pl-12 pr-6 py-3 border-2 border-gray-100 rounded-2xl font-bold bg-gray-50 outline-none focus:border-blue-500 text-center">
+                <input type="text" id="buscador" onkeyup="filtrarProductos()" placeholder="Buscar productos..." class="w-full pl-12 pr-6 py-3 border-2 border-gray-100 rounded-2xl font-bold bg-gray-50 outline-none focus:border-blue-500 text-center text-center">
             </div>
         </header>
-        <main id="main-content" class="flex-1 p-8 overflow-y-auto"></main>
+        <main id="main-content" class="flex-1 p-8 overflow-y-auto text-center"></main>
     </div>
 
     <script>
-        const CLAVE_MAESTRA = "Mupirata1";
-        let seccionDestino = "";
+        let currentUserRole = ""; // "admin" o "staff"
         let productos = JSON.parse(localStorage.getItem('productos')) || [];
         let historialVentas = JSON.parse(localStorage.getItem('historial_ventas')) || [];
         let cajasIniciales = JSON.parse(localStorage.getItem('cajas_iniciales')) || {};
@@ -86,54 +100,59 @@
 
         function fmtNum(n) { return parseFloat(parseFloat(n).toFixed(3)); }
 
-        window.onload = () => {
+        // --- SISTEMA DE LOGUEO ---
+        function intentarLogin() {
+            const u = document.getElementById('user-input').value;
+            const p = document.getElementById('pass-login').value;
+
+            if (u === "admin" && p === "Mupirata1") {
+                currentUserRole = "admin";
+                entrarAlPrograma();
+            } else if (u === "admin" && p === "12345") {
+                currentUserRole = "staff";
+                entrarAlPrograma();
+            } else {
+                alert("Usuario o Contraseña Incorrectos");
+            }
+        }
+
+        function entrarAlPrograma() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('sidebar').classList.remove('hidden');
+            document.getElementById('main-area').classList.remove('hidden');
+            
+            // Mostrar u ocultar opciones según rol
+            if (currentUserRole === "admin") {
+                document.getElementById('nav-inventory').classList.remove('hidden');
+                document.getElementById('nav-reports').classList.remove('hidden');
+                document.getElementById('nav-config').classList.remove('hidden');
+                document.getElementById('btn-logo-edit').classList.remove('hidden');
+            } else {
+                document.getElementById('nav-inventory').classList.add('hidden');
+                document.getElementById('nav-reports').classList.add('hidden');
+                document.getElementById('nav-config').classList.add('hidden');
+                document.getElementById('btn-logo-edit').classList.add('hidden');
+            }
+
             document.getElementById('app-logo').src = logoGuardado;
             actualizarInterfazConfig();
             showSection('pos');
-        };
+        }
+
+        function logout() {
+            currentUserRole = "";
+            document.getElementById('user-input').value = "";
+            document.getElementById('pass-login').value = "";
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('sidebar').classList.add('hidden');
+            document.getElementById('main-area').classList.add('hidden');
+        }
 
         function actualizarInterfazConfig() {
             document.getElementById('ui-nombre-local').innerText = configNegocio.nombre;
             document.getElementById('ui-dir1').innerText = configNegocio.dir1;
             document.getElementById('ui-dir2').innerText = configNegocio.dir2;
         }
-
-        // --- SOLUCIÓN CURSOR DEFINITIVA ---
-        function abrirModalPass(sec) {
-            seccionDestino = sec;
-            const modal = document.getElementById('modal-pass');
-            const input = document.getElementById('pass-input');
-            const buscador = document.getElementById('buscador');
-            
-            // 1. Quitamos foco de cualquier lado y bloqueamos buscador
-            buscador.blur();
-            buscador.disabled = true; 
-            
-            modal.classList.remove('hidden');
-            input.value = "";
-            
-            // 2. Intentos repetidos de foco para asegurar entrada de teclado
-            const forzarFoco = () => {
-                input.focus();
-                input.setSelectionRange(0, 0); // Posiciona cursor al inicio
-            };
-
-            setTimeout(forzarFoco, 50);
-            setTimeout(forzarFoco, 250);
-            setTimeout(forzarFoco, 500);
-        }
-
-        function cerrarModal() { 
-            document.getElementById('modal-pass').classList.add('hidden'); 
-            document.getElementById('buscador').disabled = false; // Rehabilitamos buscador
-        }
-
-        function validarPass() {
-            if (document.getElementById('pass-input').value === CLAVE_MAESTRA) { cerrarModal(); showSection(seccionDestino); } 
-            else { alert("Clave Incorrecta"); setTimeout(() => document.getElementById('pass-input').focus(), 100); }
-        }
-
-        document.getElementById('pass-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') validarPass(); });
 
         function showSection(name) {
             const container = document.getElementById('main-content');
@@ -145,7 +164,7 @@
             else if (name === 'config') renderConfig(container);
         }
 
-        // --- FUNCIONES DE VENTA Y AUDITORÍA ---
+        // --- VENTAS ---
         function renderPOS(container) {
             const filtrados = productos.filter(p => p.nombre.toLowerCase().includes(filtroActual));
             container.innerHTML = `<div class="flex gap-8 h-full">
@@ -156,18 +175,18 @@
                         <p class="text-[9px] font-bold text-gray-300 uppercase italic">Stock: ${fmtNum(p.stock)}</p>
                     </div>`).join('')}
                 </div>
-                <div class="w-[480px] bg-white rounded-[3rem] shadow-2xl p-8 flex flex-col border border-blue-50">
+                <div class="w-[480px] bg-white rounded-[3rem] shadow-2xl p-8 flex flex-col border border-blue-50 text-center">
                     <div id="cart-list" class="flex-1 overflow-y-auto space-y-3 mb-4"></div>
                     <div class="pt-6 border-t-2 border-dashed border-gray-100 space-y-4">
-                        <div class="flex justify-between items-center px-2 text-center"><span class="text-sm font-black text-gray-400 uppercase">Total</span><span id="total-txt" class="text-4xl font-black text-blue-900">$0</span></div>
+                        <div class="flex justify-between items-center px-2"><span class="text-sm font-black text-gray-400 uppercase">Total</span><span id="total-txt" class="text-4xl font-black text-blue-900">$0</span></div>
                         <div class="grid grid-cols-3 gap-2">
                             <button onclick="setMetodo('Efectivo')" id="btn-Efectivo" class="btn-pago p-3 bg-white rounded-2xl flex flex-col items-center shadow-sm active-efectivo"><i class="fas fa-money-bill-wave text-green-500 mb-1"></i><span class="text-[9px] font-black uppercase">Efectivo</span></button>
-                            <button onclick="setMetodo('Transferencia')" id="btn-Transferencia" class="btn-pago p-3 bg-white rounded-2xl flex flex-col items-center shadow-sm"><i class="fas fa-university text-blue-500 mb-1"></i><span class="text-[9px] font-black uppercase text-center">Transf.</span></button>
-                            <button onclick="setMetodo('Tarjeta')" id="btn-Tarjeta" class="btn-pago p-3 bg-white rounded-2xl flex flex-col items-center shadow-sm"><i class="fas fa-credit-card text-red-500 mb-1"></i><span class="text-[9px] font-black uppercase text-center">Tarjeta</span></button>
+                            <button onclick="setMetodo('Transferencia')" id="btn-Transferencia" class="btn-pago p-3 bg-white rounded-2xl flex flex-col items-center shadow-sm text-center"><i class="fas fa-university text-blue-500 mb-1 text-center"></i><span class="text-[9px] font-black uppercase text-center text-center">Transf.</span></button>
+                            <button onclick="setMetodo('Tarjeta')" id="btn-Tarjeta" class="btn-pago p-3 bg-white rounded-2xl flex flex-col items-center shadow-sm text-center"><i class="fas fa-credit-card text-red-500 mb-1"></i><span class="text-[9px] font-black uppercase text-center">Tarjeta</span></button>
                         </div>
-                        <div class="grid grid-cols-2 gap-3 text-center">
-                            <button onclick="procesarVenta(true)" class="bg-blue-600 text-white py-4 rounded-2xl font-black text-xs uppercase shadow-lg">Ticket</button>
-                            <button onclick="procesarVenta(false)" class="bg-gray-800 text-white py-4 rounded-2xl font-black text-xs uppercase shadow-lg">Cobrar</button>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="procesarVenta(true)" class="bg-blue-600 text-white py-4 rounded-2xl font-black text-xs uppercase shadow-lg text-center text-center text-center">Ticket</button>
+                            <button onclick="procesarVenta(false)" class="bg-gray-800 text-white py-4 rounded-2xl font-black text-xs uppercase shadow-lg text-center text-center text-center text-center">Cobrar</button>
                         </div>
                     </div>
                 </div>
@@ -188,11 +207,11 @@
             const list = document.getElementById('cart-list');
             if(!list) return;
             list.innerHTML = carrito.map((i, idx) => `<div class="bg-white p-3 rounded-2xl border flex justify-between items-center shadow-sm text-center">
-                <div class="w-1/3 font-black text-[10px] uppercase truncate text-center">${i.nombre}</div>
+                <div class="w-1/3 font-black text-[10px] uppercase truncate text-center text-center text-center">${i.nombre}</div>
                 <div class="flex items-center gap-2">
                     <input type="number" step="0.001" value="${fmtNum(i.cantidad)}" onchange="carrito[${idx}].cantidad=fmtNum(this.value);renderCart()" class="input-cantidad bg-blue-50 outline-none text-center">
-                    <span class="font-black text-sm w-20 text-right">$${fmtNum(i.precio * i.cantidad)}</span>
-                    <button onclick="carrito.splice(${idx},1);renderCart()" class="text-red-200 ml-2 text-xl"><i class="fas fa-times-circle"></i></button>
+                    <span class="font-black text-sm w-20 text-right text-center">$${fmtNum(i.precio * i.cantidad)}</span>
+                    <button onclick="carrito.splice(${idx},1);renderCart()" class="text-red-200 ml-2 text-xl text-center"><i class="fas fa-times-circle text-center text-center"></i></button>
                 </div>
             </div>`).join('');
             const total = carrito.reduce((s, i) => s + (i.precio * i.cantidad), 0);
@@ -223,21 +242,22 @@
             carrito = []; metodoActual = "Efectivo"; showSection('pos');
         }
 
+        // --- AUDITORÍA ---
         function renderReports(container) {
             const hoy = new Date().toLocaleDateString();
             const deHoy = historialVentas.filter(v => v.fecha === hoy);
-            container.innerHTML = `<h2 class="text-3xl font-black text-blue-600 uppercase italic mb-8 text-center text-center">Auditoría Hoy</h2>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 text-center">
-                    <div class="bg-white p-6 rounded-3xl border border-green-200"><p class="text-[9px] font-black text-green-500 uppercase">Efectivo</p><p class="text-2xl font-black text-gray-800">$${fmtNum(deHoy.filter(v=>v.metodo==='Efectivo').reduce((s,v)=>s+v.total,0))}</p></div>
-                    <div class="bg-white p-6 rounded-3xl border border-blue-200"><p class="text-[9px] font-black text-blue-500 uppercase">Transf.</p><p class="text-2xl font-black">$${fmtNum(deHoy.filter(v=>v.metodo==='Transferencia').reduce((s,v)=>s+v.total,0))}</p></div>
-                    <div class="bg-white p-6 rounded-3xl border border-red-200"><p class="text-[9px] font-black text-red-500 uppercase">Tarjeta</p><p class="text-2xl font-black">$${fmtNum(deHoy.filter(v=>v.metodo==='Tarjeta').reduce((s,v)=>s+v.total,0))}</p></div>
-                    <div class="bg-gray-800 p-6 rounded-3xl text-white shadow-xl"><p class="text-[9px] font-black text-green-400 uppercase italic">Ganancia Total</p><p class="text-2xl font-black">$${fmtNum(deHoy.reduce((s,v)=>s+v.ganancia,0))}</p></div>
+            container.innerHTML = `<h2 class="text-3xl font-black text-blue-600 uppercase italic mb-8 text-center">Auditoría Hoy</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 text-center text-center">
+                    <div class="bg-white p-6 rounded-3xl border border-green-200"><p class="text-[9px] font-black text-green-500 uppercase text-center text-center">Efectivo</p><p class="text-2xl font-black text-gray-800 text-center">$${fmtNum(deHoy.filter(v=>v.metodo==='Efectivo').reduce((s,v)=>s+v.total,0))}</p></div>
+                    <div class="bg-white p-6 rounded-3xl border border-blue-200 text-center text-center text-center text-center"><p class="text-[9px] font-black text-blue-500 uppercase text-center text-center">Transf.</p><p class="text-2xl font-black text-center">$${fmtNum(deHoy.filter(v=>v.metodo==='Transferencia').reduce((s,v)=>s+v.total,0))}</p></div>
+                    <div class="bg-white p-6 rounded-3xl border border-red-200 text-center text-center text-center text-center text-center"><p class="text-[9px] font-black text-red-500 uppercase text-center text-center">Tarjeta</p><p class="text-2xl font-black text-center text-center">$${fmtNum(deHoy.filter(v=>v.metodo==='Tarjeta').reduce((s,v)=>s+v.total,0))}</p></div>
+                    <div class="bg-gray-800 p-6 rounded-3xl text-white shadow-xl text-center text-center text-center text-center text-center"><p class="text-[9px] font-black text-green-400 uppercase italic text-center text-center">Ganancia Total</p><p class="text-2xl font-black text-center text-center">$${fmtNum(deHoy.reduce((s,v)=>s+v.ganancia,0))}</p></div>
                 </div>
-                <div class="space-y-3 pb-10">${deHoy.slice().reverse().map(v => `<div class="p-4 rounded-3xl border-2 flex justify-between items-center ${v.metodo==='Efectivo'?'bg-green-50 border-green-100':v.metodo==='Transferencia'?'bg-blue-50 border-blue-100':'bg-red-50 border-red-100'}">
-                    <div class="w-32 text-center"><p class="text-[8px] font-black text-gray-400">${v.hora}</p><p class="font-black text-[10px] uppercase">${v.metodo}</p></div>
-                    <div class="text-[9px] font-bold text-gray-600 italic flex-1 mx-4 text-center">${v.itemsDetallados ? v.itemsDetallados.map(i => `${fmtNum(i.cantidad)}x ${i.nombre}`).join(' | ') : ''}</div>
+                <div class="space-y-3 pb-10 text-center">${deHoy.slice().reverse().map(v => `<div class="p-4 rounded-3xl border-2 flex justify-between items-center ${v.metodo==='Efectivo'?'bg-green-50 border-green-100':v.metodo==='Transferencia'?'bg-blue-50 border-blue-100':'bg-red-50 border-red-100'}">
+                    <div class="w-32 text-center text-center text-center text-center"><p class="text-[8px] font-black text-gray-400 text-center text-center">${v.hora}</p><p class="font-black text-[10px] uppercase text-center text-center">${v.metodo}</p></div>
+                    <div class="text-[9px] font-bold text-gray-600 italic flex-1 mx-4 text-center text-center">${v.itemsDetallados ? v.itemsDetallados.map(i => `${fmtNum(i.cantidad)}x ${i.nombre}`).join(' | ') : ''}</div>
                     <span class="font-black text-lg text-gray-800 text-center">$${fmtNum(v.total)}</span>
-                    <button onclick="anularVenta(${v.id})" class="text-red-300 ml-4 hover:text-red-500 transition"><i class="fas fa-trash-alt"></i></button>
+                    <button onclick="anularVenta(${v.id})" class="text-red-300 ml-4 hover:text-red-500 transition text-center text-center text-center"><i class="fas fa-trash-alt text-center"></i></button>
                 </div>`).join('')}</div>`;
         }
 
@@ -257,6 +277,44 @@
             }
         }
 
+        // --- INVENTARIO ---
+        function renderInventory(container) {
+            container.innerHTML = `<div class="bg-white p-8 rounded-[2.5rem] shadow-xl mb-8 border border-blue-50 text-center"><div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <input type="text" id="inv-nombre" placeholder="Nombre" class="p-4 border-2 border-gray-100 rounded-2xl font-bold uppercase outline-none text-center">
+                <input type="number" id="inv-costo" placeholder="Costo $" class="p-4 border-2 border-gray-100 rounded-2xl font-bold outline-none text-center">
+                <input type="number" id="inv-precio" placeholder="Venta $" class="p-4 border-2 border-gray-100 rounded-2xl font-bold outline-none text-center">
+                <input type="number" id="inv-stock" placeholder="Stock" class="p-4 border-2 border-gray-100 rounded-2xl font-bold outline-none text-center">
+                <button onclick="guardarProducto()" class="bg-blue-600 text-white rounded-2xl font-black text-xs uppercase shadow-lg text-center text-center">Agregar</button>
+            </div></div>
+            <div class="space-y-2 pb-10 text-center">${productos.map((p, idx) => `<div class="bg-white p-4 rounded-2xl border flex justify-between items-center shadow-sm text-center">
+                <div class="w-1/3 font-black text-xs uppercase truncate px-2 text-center text-center text-center text-center text-center">${p.nombre}</div>
+                <input type="number" value="${fmtNum(p.costo)}" oninput="productos[${idx}].costo=fmtNum(this.value);localStorage.setItem('productos',JSON.stringify(productos))" class="w-20 p-2 bg-orange-50 rounded-xl text-orange-600 font-black text-xs text-center outline-none">
+                <input type="number" value="${fmtNum(p.precio)}" oninput="productos[${idx}].precio=fmtNum(this.value);localStorage.setItem('productos',JSON.stringify(productos))" class="w-20 p-2 bg-blue-50 rounded-xl text-blue-600 font-black text-xs text-center outline-none">
+                <input type="number" value="${fmtNum(p.stock)}" oninput="productos[${idx}].stock=fmtNum(this.value);localStorage.setItem('productos',JSON.stringify(productos))" class="w-20 p-2 bg-gray-50 rounded-xl font-black text-xs text-center outline-none">
+                <button onclick="productos.splice(${idx},1);localStorage.setItem('productos',JSON.stringify(productos));showSection('inventory')" class="text-red-300 px-4 hover:text-red-500 transition text-center text-center text-center"><i class="fas fa-trash text-center"></i></button>
+            </div>`).join('')}</div>`;
+        }
+
+        // --- TOTALES DIARIOS ---
+        function renderDailyTotals(container) {
+            const resumen = historialVentas.reduce((acc, v) => { if (!acc[v.fecha]) acc[v.fecha] = { bruto: 0, ventas: 0 }; acc[v.fecha].bruto += v.total; acc[v.fecha].ventas += 1; return acc; }, {});
+            container.innerHTML = `<div class="flex justify-between items-center mb-8 gap-4 text-center"><h2 class="text-2xl font-black uppercase text-blue-600 italic text-center">Caja y Respaldo</h2><div class="flex gap-2">
+                <label class="bg-gray-800 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase cursor-pointer">Subir <input type="file" class="hidden" onchange="subirRespaldo(event)"></label>
+                <button onclick="respaldarDatos()" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase">Guardar</button>
+                <button onclick="cerrarCajaYPDF()" class="bg-red-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase text-center text-center">PDF</button>
+            </div></div>
+            <div class="space-y-4 pb-10 text-center text-center text-center">${Object.keys(resumen).reverse().map(fecha => {
+                const cajaIni = cajasIniciales[fecha] || 0;
+                return `<div class="bg-white p-6 rounded-[2rem] border shadow-sm space-y-4 text-center text-center text-center text-center"><div class="flex justify-between border-b pb-2 text-center text-center text-center text-center"><span class="font-black text-blue-900">${fecha}</span><span class="text-[9px] font-black text-gray-400 uppercase text-center text-center text-center">${resumen[fecha].ventas} tickets</span></div>
+                <div class="grid grid-cols-3 gap-4 text-center text-center text-center">
+                    <div><p class="text-[8px] font-black uppercase text-center text-center text-center">Caja Inicial</p><input type="number" value="${fmtNum(cajaIni)}" onchange="guardarCajaIni('${fecha}', this.value)" class="w-20 text-center font-black bg-gray-50 border rounded-lg outline-none text-center"></div>
+                    <div><p class="text-[8px] font-black uppercase text-center text-center text-center">Recaudado</p><p class="font-black text-xl text-center text-center">$${fmtNum(resumen[fecha].bruto)}</p></div>
+                    <div class="text-right text-center text-center text-center text-center text-center"><p class="text-[8px] font-black uppercase text-center">Plata Real</p><p class="font-black text-green-600 text-2xl text-center">$${fmtNum(cajaIni + resumen[fecha].bruto)}</p></div>
+                </div></div>`;
+            }).join('')}</div>`;
+        }
+
+        // --- RANKING SEMANAL ---
         function renderWeeklyRanking(container) {
             const agrupado = historialVentas.reduce((acc, v) => {
                 if (!acc[v.fecha]) acc[v.fecha] = {};
@@ -269,51 +327,28 @@
                 return acc;
             }, {});
             const fechas = Object.keys(agrupado).sort((a,b) => new Date(b) - new Date(a)).slice(0, 7);
-            container.innerHTML = `<h2 class="text-3xl font-black text-blue-600 uppercase italic mb-8 text-center">Ventas Semanales por Producto</h2>
-                <div class="space-y-6">${fechas.map(f => `<div class="bg-white p-6 rounded-[2.5rem] shadow-sm border text-center"><h3 class="font-black text-blue-900 border-b pb-2 mb-4 uppercase text-center">${f}</h3><div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">${Object.entries(agrupado[f]).sort((a,b)=>b[1]-a[1]).map(([n, c]) => `<div class="bg-gray-50 p-4 rounded-2xl border text-center"><p class="text-[9px] font-black text-gray-400 uppercase truncate text-center">${n}</p><p class="text-xl font-black text-gray-800 text-center">${c}</p></div>`).join('')}</div></div>`).join('')}</div>`;
+            container.innerHTML = `<h2 class="text-3xl font-black text-blue-600 uppercase italic mb-8 text-center text-center">Ventas Semanales por Producto</h2>
+                <div class="space-y-6">${fechas.map(f => `
+                        <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border text-center text-center text-center">
+                            <h3 class="font-black text-blue-900 border-b pb-2 mb-4 uppercase text-center text-center text-center">${f}</h3>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                                ${Object.entries(agrupado[f]).sort((a,b)=>b[1]-a[1]).map(([n, c]) => `
+                                    <div class="bg-gray-50 p-4 rounded-2xl border text-center text-center text-center">
+                                        <p class="text-[9px] font-black text-gray-400 uppercase truncate text-center text-center text-center">${n}</p>
+                                        <p class="text-xl font-black text-gray-800 text-center text-center text-center text-center">${c}</p>
+                                    </div>`).join('')}
+                            </div>
+                        </div>`).join('')}
+                </div>`;
         }
 
-        function renderInventory(container) {
-            container.innerHTML = `<div class="bg-white p-8 rounded-[2.5rem] shadow-xl mb-8 border border-blue-50 text-center"><div class="grid grid-cols-1 md:grid-cols-5 gap-3">
-                <input type="text" id="inv-nombre" placeholder="Nombre" class="p-4 border-2 border-gray-100 rounded-2xl font-bold uppercase outline-none text-center">
-                <input type="number" id="inv-costo" placeholder="Costo $" class="p-4 border-2 border-gray-100 rounded-2xl font-bold outline-none text-center">
-                <input type="number" id="inv-precio" placeholder="Venta $" class="p-4 border-2 border-gray-100 rounded-2xl font-bold outline-none text-center">
-                <input type="number" id="inv-stock" placeholder="Stock" class="p-4 border-2 border-gray-100 rounded-2xl font-bold outline-none text-center">
-                <button onclick="guardarProducto()" class="bg-blue-600 text-white rounded-2xl font-black text-xs uppercase shadow-lg">Agregar</button>
-            </div></div>
-            <div class="space-y-2 pb-10">${productos.map((p, idx) => `<div class="bg-white p-4 rounded-2xl border flex justify-between items-center shadow-sm text-center">
-                <div class="w-1/3 font-black text-xs uppercase truncate px-2 text-center text-center">${p.nombre}</div>
-                <input type="number" value="${fmtNum(p.costo)}" oninput="productos[${idx}].costo=fmtNum(this.value);localStorage.setItem('productos',JSON.stringify(productos))" class="w-20 p-2 bg-orange-50 rounded-xl text-orange-600 font-black text-xs text-center outline-none">
-                <input type="number" value="${fmtNum(p.precio)}" oninput="productos[${idx}].precio=fmtNum(this.value);localStorage.setItem('productos',JSON.stringify(productos))" class="w-20 p-2 bg-blue-50 rounded-xl text-blue-600 font-black text-xs text-center outline-none">
-                <input type="number" value="${fmtNum(p.stock)}" oninput="productos[${idx}].stock=fmtNum(this.value);localStorage.setItem('productos',JSON.stringify(productos))" class="w-20 p-2 bg-gray-50 rounded-xl font-black text-xs text-center outline-none">
-                <button onclick="productos.splice(${idx},1);localStorage.setItem('productos',JSON.stringify(productos));showSection('inventory')" class="text-red-200 px-4 hover:text-red-500 transition text-center"><i class="fas fa-trash"></i></button>
-            </div>`).join('')}</div>`;
-        }
-
-        function renderDailyTotals(container) {
-            const resumen = historialVentas.reduce((acc, v) => { if (!acc[v.fecha]) acc[v.fecha] = { bruto: 0, ventas: 0 }; acc[v.fecha].bruto += v.total; acc[v.fecha].ventas += 1; return acc; }, {});
-            container.innerHTML = `<div class="flex justify-between items-center mb-8 gap-4 text-center"><h2 class="text-2xl font-black uppercase text-blue-600 italic text-center">Caja y Respaldo</h2><div class="flex gap-2">
-                <label class="bg-gray-800 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase cursor-pointer">Subir <input type="file" class="hidden" onchange="subirRespaldo(event)"></label>
-                <button onclick="respaldarDatos()" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase">Guardar</button>
-                <button onclick="cerrarCajaYPDF()" class="bg-red-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase text-center">PDF</button>
-            </div></div>
-            <div class="space-y-4 pb-10">${Object.keys(resumen).reverse().map(fecha => {
-                const cajaIni = cajasIniciales[fecha] || 0;
-                return `<div class="bg-white p-6 rounded-[2rem] border shadow-sm space-y-4 text-center"><div class="flex justify-between border-b pb-2 text-center text-center"><span class="font-black text-blue-900">${fecha}</span><span class="text-[9px] font-black text-gray-400 uppercase text-center">${resumen[fecha].ventas} tickets</span></div>
-                <div class="grid grid-cols-3 gap-4 text-center">
-                    <div><p class="text-[8px] font-black uppercase text-center">Caja Inicial</p><input type="number" value="${fmtNum(cajaIni)}" onchange="guardarCajaIni('${fecha}', this.value)" class="w-20 text-center font-black bg-gray-50 border rounded-lg outline-none"></div>
-                    <div><p class="text-[8px] font-black uppercase text-center">Recaudado</p><p class="font-black text-xl text-center">$${fmtNum(resumen[fecha].bruto)}</p></div>
-                    <div class="text-right text-center"><p class="text-[8px] font-black uppercase text-center">Plata Real</p><p class="font-black text-green-600 text-2xl text-center">$${fmtNum(cajaIni + resumen[fecha].bruto)}</p></div>
-                </div></div>`;
-            }).join('')}</div>`;
-        }
-
+        // --- CONFIGURACIÓN ---
         function renderConfig(container) {
-            container.innerHTML = `<div class="max-w-2xl mx-auto bg-white p-10 rounded-[3rem] shadow-xl border border-blue-50 text-center"><h2 class="text-3xl font-black text-blue-600 uppercase italic mb-8">Configuración</h2><div class="space-y-6">
-                <div><label class="text-[10px] font-black uppercase text-gray-400 block mb-2 text-center">Nombre del Local</label><input type="text" id="cfg-nombre" value="${configNegocio.nombre}" class="w-full p-4 border-2 rounded-2xl font-bold uppercase outline-none focus:border-blue-500 text-center"></div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4"><input type="text" id="cfg-dir1" value="${configNegocio.dir1}" class="p-4 border-2 rounded-2xl font-bold text-center"><input type="text" id="cfg-dir2" value="${configNegocio.dir2}" class="p-4 border-2 rounded-2xl font-bold text-center"></div>
-                <div class="grid grid-cols-2 gap-4"><input type="text" id="cfg-tel" placeholder="Tel" value="${configNegocio.tel}" class="p-4 border-2 rounded-2xl font-bold text-center"><input type="text" id="cfg-ig" placeholder="IG" value="${configNegocio.ig}" class="p-4 border-2 rounded-2xl font-bold text-center"></div>
-                <button onclick="guardarConfiguracion()" class="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black uppercase shadow-lg text-center">Guardar Todo</button>
+            container.innerHTML = `<div class="max-w-2xl mx-auto bg-white p-10 rounded-[3rem] shadow-xl border border-blue-50 text-center text-center text-center"><h2 class="text-3xl font-black text-blue-600 uppercase italic mb-8 text-center text-center">Configuración</h2><div class="space-y-6">
+                <div><label class="text-[10px] font-black uppercase text-gray-400 block mb-2 text-center text-center text-center">Nombre del Local</label><input type="text" id="cfg-nombre" value="${configNegocio.nombre}" class="w-full p-4 border-2 rounded-2xl font-bold uppercase outline-none focus:border-blue-500 text-center"></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-center"><input type="text" id="cfg-dir1" value="${configNegocio.dir1}" class="p-4 border-2 rounded-2xl font-bold text-center"><input type="text" id="cfg-dir2" value="${configNegocio.dir2}" class="p-4 border-2 rounded-2xl font-bold text-center text-center text-center"></div>
+                <div class="grid grid-cols-2 gap-4 text-center"><input type="text" id="cfg-tel" placeholder="Tel" value="${configNegocio.tel}" class="p-4 border-2 rounded-2xl font-bold text-center"><input type="text" id="cfg-ig" placeholder="IG" value="${configNegocio.ig}" class="p-4 border-2 rounded-2xl font-bold text-center text-center text-center text-center"></div>
+                <button onclick="guardarConfiguracion()" class="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black uppercase shadow-lg text-center text-center text-center text-center text-center text-center text-center">Guardar Todo</button>
             </div></div>`;
         }
 
