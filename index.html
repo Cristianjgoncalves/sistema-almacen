@@ -326,11 +326,25 @@ function showSection(s) {
 
     function actualizarProducto(id) {
         const p = productos.find(x => x.id === id);
-        p.costo = parseFloat(document.getElementById(`c-${id}`).value);
-        p.precio = parseFloat(document.getElementById(`v-${id}`).value);
-        p.stock = parseFloat(document.getElementById(`s-${id}`).value);
-        localStorage.setItem('productos', JSON.stringify(productos));
-        alert("PRODUCTO ACTUALIZADO");
+        if (p) {
+            p.costo = parseFloat(document.getElementById(`c-${id}`).value) || 0;
+            p.precio = parseFloat(document.getElementById(`v-${id}`).value) || 0;
+            p.stock = parseFloat(document.getElementById(`s-${id}`).value) || 0;
+            
+            localStorage.setItem('productos', JSON.stringify(productos));
+            
+            // En lugar de alert(), usamos un cartelito que se borra solo
+            const aviso = document.createElement('div');
+            aviso.className = 'fixed bottom-10 right-10 bg-green-500 text-white p-4 rounded-2xl font-black shadow-2xl z-[10000] uppercase italic';
+            aviso.innerText = "¡PRODUCTO ACTUALIZADO!";
+            document.body.appendChild(aviso);
+            
+            // Se borra en 1 segundo y devuelve el foco
+            setTimeout(() => {
+                aviso.remove();
+                document.getElementById('buscador').focus();
+            }, 1000);
+        }
     }
 
    function eliminarProducto(idx) {
