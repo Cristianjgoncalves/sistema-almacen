@@ -89,10 +89,11 @@
         } else { alert("CONTRASEÑA INCORRECTA"); }
     }
 
-    function showSection(s) {
+function showSection(s) {
         const c = document.getElementById('main-content');
         document.getElementById('buscador').value = "";
         filtro = "";
+        
         if (s === 'pos') renderPOS(c);
         else if (s === 'inventory') renderInventory(c);
         else if (s === 'caja') renderCaja(c);
@@ -100,6 +101,16 @@
         else if (s === 'ganancias') renderGanancias(c);
         else if (s === 'pedidos') renderPedidos(c);
         else if (s === 'config') renderConfig(c);
+
+        // SOLUCIÓN AL CURSOR: Fuerza el foco al buscador después de cargar la sección
+        setTimeout(() => {
+            const b = document.getElementById('buscador');
+            if (b) {
+                b.focus();
+                // Esto asegura que el cursor esté listo para escribir
+                b.click(); 
+            }
+        }, 200);
     }
         function renderPOS(c) {
         c.innerHTML = `
@@ -334,8 +345,8 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 max-w-4xl mx-auto">
             <div class="bg-white p-6 rounded-3xl border shadow-lg text-center">
                 <p class="text-[10px] font-black text-gray-400 uppercase">Caja Inicial (Efectivo)</p>
-                <input type="number" id="caja-ini" value="${inicial}" class="text-3xl font-black text-blue-600 w-full text-center border-none outline-none">
-                <button onclick="guardarCajaIni()" class="mt-2 text-[10px] bg-blue-600 text-white px-4 py-1 rounded-full font-black">FIJAR INICIO</button>
+                <input type="number" id="caja-ini" value="${inicial}" class="text-3xl font-black text-blue-600 w-full text-center border-b-2 border-blue-50 outline-none focus:border-blue-500">
+                <button onclick="guardarCajaIni()" class="mt-2 text-[10px] bg-blue-600 text-white px-4 py-1 rounded-full font-black uppercase">Fijar Inicio</button>
             </div>
             <div class="bg-white p-6 rounded-3xl border shadow-lg text-center">
                 <p class="text-[10px] font-black text-gray-400 uppercase">Ventas Hoy (Efectivo)</p>
@@ -348,16 +359,28 @@
         </div>
 
         <div class="bg-white p-8 rounded-[2.5rem] border shadow-xl max-w-xl mx-auto text-center mb-6">
-            <h3 class="text-xs font-black text-gray-400 uppercase mb-4 italic">Cargar Gasto</h3>
+            <h3 class="text-xs font-black text-gray-400 uppercase mb-4 italic">Cargar Nuevo Gasto</h3>
             <div class="flex gap-2">
-                <input type="text" id="g-desc" placeholder="DESCRIPCIÓN" class="flex-1 p-3 border-2 rounded-xl font-black uppercase text-xs">
-                <input type="number" id="g-monto" placeholder="$" class="w-24 p-3 border-2 rounded-xl font-black text-xs">
-                <button onclick="guardarGasto()" class="bg-red-500 text-white px-6 rounded-xl font-black">OK</button>
+                <input type="text" id="g-desc" placeholder="DESCRIPCIÓN" class="flex-1 p-3 border-2 rounded-xl font-black uppercase text-xs outline-none">
+                <input type="number" id="g-monto" placeholder="$" class="w-24 p-3 border-2 rounded-xl font-black text-xs outline-none">
+                <button onclick="guardarGasto()" class="bg-red-500 text-white px-6 rounded-xl font-black uppercase text-xs">OK</button>
+            </div>
+            <div class="mt-6 text-left space-y-2">
+                <p class="text-[9px] font-black text-gray-300 uppercase">Lista de Gastos de Hoy:</p>
+                ${gastos.filter(g => g.fecha === hoy).map(g => `
+                    <div class="flex justify-between items-center bg-gray-50 p-2 rounded-lg border border-gray-100">
+                        <span class="text-[10px] font-black uppercase text-gray-600">${g.desc}</span>
+                        <div class="flex items-center gap-4">
+                            <span class="text-[11px] font-black text-red-500">$${g.monto.toFixed(2)}</span>
+                            <button onclick="eliminarGasto(${g.id})" class="text-gray-300 hover:text-red-500 text-lg">×</button>
+                        </div>
+                    </div>
+                `).join('')}
             </div>
         </div>
 
-        <div class="text-center">
-            <p class="text-gray-400 font-black uppercase text-xs mb-1">Efectivo Total en Caja</p>
+        <div class="text-center font-black">
+            <p class="text-gray-400 uppercase text-xs mb-1">Efectivo Total en Mano</p>
             <h3 class="text-6xl font-black text-blue-900">$${(inicial + ingresos - egresos).toFixed(2)}</h3>
         </div>`;
     }
@@ -367,7 +390,7 @@
         const m = parseFloat(document.getElementById('caja-ini').value) || 0;
         cajaDiaria[hoy] = m;
         localStorage.setItem('caja_diaria', JSON.stringify(cajaDiaria));
-        alert("CAJA INICIAL GUARDADA");
+        showSection('caja'); // Refresca para ver el cambio
     }
 
     function guardarGasto() {
@@ -379,42 +402,47 @@
             showSection('caja');
         }
     }
-        function renderFacturacion(c) {
+
+    function eliminarGasto(id) {
+        if(confirm("¿BORRAR ESTE GASTO?")) {
+            gastos = gastos.filter(g => g.id !== id);
+            localStorage.setItem('gastos', JSON.stringify(gastos));
+            showSection('caja');
+        }
+    }
+      function renderFacturacion(c) {
         const hoy = new Date().toLocaleDateString();
         const ventasHoy = historial.filter(v => v.fecha === hoy);
         
         c.innerHTML = `
         <h2 class="text-2xl font-black text-blue-600 mb-6 uppercase italic text-center">Registro de Facturación</h2>
-        <div class="bg-blue-600 text-white p-6 rounded-3xl mb-6 text-center max-w-sm mx-auto shadow-lg">
-            <p class="text-[10px] font-black uppercase opacity-80">Facturas Emitidas Hoy</p>
-            <p class="text-5xl font-black">${ventasHoy.length}</p>
+        <div class="bg-blue-600 text-white p-6 rounded-3xl mb-6 text-center max-w-sm mx-auto shadow-lg font-black">
+            <p class="text-[10px] uppercase opacity-80">Facturas Diarias</p>
+            <p class="text-5xl">${ventasHoy.length}</p>
         </div>
         <div class="space-y-3 max-w-4xl mx-auto pb-10">
             ${ventasHoy.slice().reverse().map(v => `
-            <div class="bg-white p-4 rounded-2xl border flex justify-between items-center shadow-sm">
+            <div class="bg-white p-4 rounded-2xl border flex justify-between items-center shadow-sm font-black">
                 <div class="text-left">
-                    <p class="text-[10px] font-black text-gray-400">${v.hora} - ${v.metodo} ${v.cliente ? '('+v.cliente+')' : ''}</p>
-                    <p class="text-xs font-bold text-blue-600 uppercase">${v.items.map(i => i.cant + 'x ' + i.nombre).join(' | ')}</p>
+                    <p class="text-[9px] text-gray-400 uppercase">${v.hora} - ${v.metodo}</p>
+                    <p class="text-[11px] text-blue-600 uppercase truncate w-64">${v.items.map(i => i.cant + 'x ' + i.nombre).join(' | ')}</p>
                 </div>
-                <div class="flex items-center gap-6">
-                    <span class="text-xl font-black text-gray-800">$${v.total.toFixed(2)}</span>
-                    <button onclick="anularVenta(${v.id})" class="text-red-300 hover:text-red-500 text-xl"><i class="fas fa-trash-alt"></i></button>
+                <div class="flex items-center gap-4">
+                    <span class="text-xl text-gray-800">$${v.total.toFixed(2)}</span>
+                    <button onclick="reimprimirFactura(${v.id})" class="text-blue-500 text-xl p-2 hover:bg-blue-50 rounded-full" title="Reimprimir Ticket">
+                        <i class="fas fa-print"></i>
+                    </button>
+                    <button onclick="anularVenta(${v.id})" class="text-red-300 hover:text-red-500 text-xl p-2"><i class="fas fa-trash-alt"></i></button>
                 </div>
             </div>`).join('')}
         </div>`;
     }
 
-    function anularVenta(id) {
-        if (confirm("¿ANULAR ESTA VENTA Y DEVOLVER STOCK?")) {
-            const v = historial.find(x => x.id === id);
-            v.items.forEach(item => {
-                const p = productos.find(x => x.id === item.id);
-                if (p) p.stock = (p.stock || 0) + item.cant;
-            });
-            historial = historial.filter(x => x.id !== id);
-            localStorage.setItem('historial_ventas', JSON.stringify(historial));
-            localStorage.setItem('productos', JSON.stringify(productos));
-            showSection('facturacion');
+    function reimprimirFactura(id) {
+        const v = historial.find(x => x.id === id);
+        if (v) {
+            generarTicketPDF(v);
+            alert("TICKET RE-GENERADO");
         }
     }
         function renderGanancias(c) {
