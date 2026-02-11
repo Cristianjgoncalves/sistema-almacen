@@ -1,353 +1,528 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>El Almacen del Repostero v107 - Portable</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Almacén del Repostero v108 - PROFESIONAL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background: #f3f4f6; overflow: hidden; }
-        .btn-pago { border: 2px solid #e5e7eb; border-radius: 1rem; padding: 10px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.2s; }
-        .active-efectivo { border-color: #22c55e; background: #f0fdf4; }
-        .active-fiado { border-color: #f59e0b; background: #fffbeb; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+        .btn-seccion { transition: all 0.2s; border-radius: 1rem; font-weight: 900; text-transform: uppercase; }
+        .btn-seccion:hover { background: #eff6ff; color: #2563eb; }
+        .active-metodo { border-color: #2563eb; background: #eff6ff; color: #2563eb; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        input[type="number"]::-webkit-inner-spin-button { display: none; }
     </style>
 </head>
 <body class="h-screen flex" ondblclick="document.getElementById('buscador').focus()">
+    <div id="sidebar" class="hidden w-64 bg-white shadow-2xl flex flex-col z-20 border-r border-gray-200">
+        <div class="p-6 text-center border-b">
+            <h1 class="text-xl font-black text-blue-600 italic leading-tight uppercase">EL ALMACÉN<br>DEL REPOSTERO</h1>
+            <p id="ui-local-nombre" class="text-[10px] font-bold text-gray-400 mt-2 uppercase"></p>
+        </div>
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <button onclick="showSection('pos')" class="btn-seccion w-full flex items-center p-3 text-gray-600"><i class="fas fa-cash-register mr-3 text-blue-500 w-5"></i> Ventas</button>
+            <button onclick="showSection('pedidos')" class="btn-seccion w-full flex items-center p-3 text-gray-600"><i class="fas fa-truck-loading mr-3 text-purple-500 w-5"></i> Pedidos</button>
+            <button id="nav-inv" onclick="showSection('inventory')" class="hidden btn-seccion w-full flex items-center p-3 text-gray-600"><i class="fas fa-boxes mr-3 text-orange-500 w-5"></i> Inventario</button>
+            <button onclick="showSection('caja')" class="btn-seccion w-full flex items-center p-3 text-gray-600"><i class="fas fa-vault mr-3 text-green-500 w-5"></i> Caja Diaria</button>
+            <button id="nav-fac" onclick="showSection('facturacion')" class="hidden btn-seccion w-full flex items-center p-3 text-gray-600"><i class="fas fa-file-invoice mr-3 text-blue-400 w-5"></i> Facturación</button>
+            <button id="nav-gan" onclick="showSection('ganancias')" class="hidden btn-seccion w-full flex items-center p-3 text-gray-600"><i class="fas fa-chart-line mr-3 text-green-600 w-5"></i> Ganancias</button>
+            <button onclick="showSection('config')" class="btn-seccion w-full flex items-center p-3 text-gray-500"><i class="fas fa-cog mr-3 w-5"></i> Configuración</button>
+        </nav>
+        <div class="p-4 border-t text-center">
+            <button onclick="location.reload()" class="text-[10px] font-black text-red-400 uppercase italic hover:text-red-600">Cerrar Sesión</button>
+        </div>
+    </div>
     <div id="login-screen" class="fixed inset-0 bg-blue-600 z-[200] flex items-center justify-center p-4">
         <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-md text-center">
-            <h2 class="text-2xl font-black mb-6 text-blue-600 uppercase italic">EL ALMACEN DEL REPOSTERO</h2>
+            <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-unlock-alt text-3xl text-blue-600"></i>
+            </div>
+            <h2 class="text-2xl font-black mb-6 text-blue-900 uppercase italic">INGRESO AL SISTEMA</h2>
             <input type="password" id="pass-login" placeholder="CONTRASEÑA" class="w-full p-4 border-2 rounded-2xl mb-4 text-center font-black outline-none focus:border-blue-500">
-            <button onclick="intentarLogin()" class="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black uppercase shadow-xl hover:bg-blue-700 transition-all">Ingresar</button>
+            <button onclick="intentarLogin()" class="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black uppercase shadow-xl hover:bg-blue-700 transition-all">Entrar</button>
         </div>
     </div>
-    <div id="sidebar" class="hidden w-64 bg-white shadow-xl flex flex-col z-20 border-r text-center font-black">
-        <div class="p-6 border-b">
-            <h1 class="text-xl font-black text-blue-600 uppercase italic leading-tight">EL ALMACEN<br>DEL REPOSTERO</h1>
-            <p id="ui-local" class="text-[9px] font-bold text-gray-400 uppercase italic mt-1"></p>
-        </div>
-        <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-            <button onclick="showSection('pos')" class="w-full flex items-center p-3 hover:bg-blue-50 rounded-xl text-gray-600">
-                <i class="fas fa-cash-register mr-3 text-blue-500 w-5"></i> Ventas
-            </button>
-            <button onclick="showSection('pedidos')" class="w-full flex items-center p-3 hover:bg-blue-50 rounded-xl text-gray-600">
-                <i class="fas fa-clipboard-list mr-3 text-purple-500 w-5"></i> Pedidos
-            </button>
-            <button id="nav-inv" onclick="showSection('inventory')" class="hidden w-full flex items-center p-3 hover:bg-blue-50 rounded-xl text-gray-600">
-                <i class="fas fa-boxes mr-3 text-blue-500 w-5"></i> Inventario
-            </button>
-            <button id="nav-rep" onclick="showSection('reports')" class="hidden w-full flex items-center p-3 hover:bg-blue-50 rounded-xl text-gray-600">
-                <i class="fas fa-file-invoice-dollar mr-3 text-blue-500 w-5"></i> Auditoria
-            </button>
-            <button id="nav-gan" onclick="showSection('ganancias')" class="hidden w-full flex items-center p-3 hover:bg-green-50 rounded-xl text-gray-600">
-                <i class="fas fa-hand-holding-usd mr-3 text-green-500 w-5"></i> Ganancias
-            </button>
-            <button onclick="showSection('totals')" class="w-full flex items-center p-3 hover:bg-blue-50 rounded-xl text-gray-600">
-                <i class="fas fa-chart-line mr-3 text-blue-500 w-5"></i> Totales Diarios
-            </button>
-            <button onclick="showSection('accounts')" class="w-full flex items-center p-3 hover:bg-orange-50 rounded-xl text-orange-600">
-                <i class="fas fa-user-clock mr-3 w-5"></i> Cta. Corriente
-            </button>
-            <button onclick="showSection('weekly')" class="w-full flex items-center p-3 hover:bg-blue-50 rounded-xl text-gray-600">
-                <i class="fas fa-list-ol mr-3 text-yellow-500 w-5"></i> Ranking
-            </button>
-            <button onclick="showSection('config')" class="w-full flex items-center p-3 hover:bg-gray-50 rounded-xl text-gray-500">
-                <i class="fas fa-cog mr-3 w-5"></i> Configuracion
-            </button>
-        </nav>
-        <div class="p-4 border-t">
-            <button onclick="location.reload()" class="text-[10px] font-black text-red-400 uppercase italic">Salir / Bloquear</button>
-        </div>
-    </div>
-    <div id="main-area" class="hidden flex-1 flex flex-col overflow-hidden text-center font-black">
-        <header class="bg-white p-4 border-b flex justify-center">
-            <input type="text" id="buscador" oninput="filtro=this.value.toLowerCase();renderVentas()" placeholder="BUSCAR PRODUCTO..." class="w-full max-w-lg p-3 border-2 rounded-2xl font-bold text-center bg-gray-50 outline-none uppercase focus:border-blue-400">
+
+    <div id="main-area" class="hidden flex-1 flex flex-col overflow-hidden">
+        <header class="bg-white p-4 border-b flex justify-center items-center shadow-sm">
+            <div class="relative w-full max-w-xl">
+                <i class="fas fa-search absolute left-4 top-4 text-gray-300"></i>
+                <input type="text" id="buscador" oninput="filtro=this.value.toLowerCase();renderVentas()" placeholder="BUSCAR PRODUCTOS EN EL ALMACÉN..." class="w-full p-3 pl-12 border-2 rounded-2xl font-bold bg-gray-50 outline-none focus:border-blue-400 uppercase">
+            </div>
         </header>
-        <main id="main-content" class="flex-1 p-6 overflow-y-auto text-center"></main>
+        <main id="main-content" class="flex-1 p-6 overflow-y-auto"></main>
     </div>
-
     <script>
-        // Variables Globales y Carga de Datos
-        let productos = JSON.parse(localStorage.getItem('productos')) || [];
-        let historial = JSON.parse(localStorage.getItem('historial_ventas')) || [];
-        let gastos = JSON.parse(localStorage.getItem('gastos')) || [];
-        let cuentas = JSON.parse(localStorage.getItem('cuentas_corrientes')) || {};
-        let pedidos = JSON.parse(localStorage.getItem('pedidos_repostero')) || [];
-        let config = JSON.parse(localStorage.getItem('config_negocio')) || { nombre: "EL ALMACEN DEL REPOSTERO", tel: "", ig: "", fb: "" };
-        
-        let carrito = [];
-        let filtro = "";
-        let met = "Efectivo";
-      function intentarLogin() {
-            const p = document.getElementById('pass-login').value;
-            // Mupirata1 es el dueño, 12345 es el empleado
-            if (p === "Mupirata1" || p === "12345") {
-                if (p === "Mupirata1") {
-                    document.getElementById('nav-inv').classList.remove('hidden');
-                    document.getElementById('nav-rep').classList.remove('hidden');
-                    document.getElementById('nav-gan').classList.remove('hidden');
-                }
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('sidebar').classList.remove('hidden');
-                document.getElementById('main-area').classList.remove('hidden');
-                document.getElementById('ui-local').innerText = config.nombre;
-                showSection('pos');
-            } else {
-                alert("Contraseña Incorrecta");
+    // Memoria del sistema (se guarda en la PC)
+    let productos = JSON.parse(localStorage.getItem('productos')) || [];
+    let historial = JSON.parse(localStorage.getItem('historial_ventas')) || [];
+    let gastos = JSON.parse(localStorage.getItem('gastos')) || [];
+    let cuentas = JSON.parse(localStorage.getItem('cuentas_corrientes')) || {};
+    let pedidos = JSON.parse(localStorage.getItem('pedidos_repostero')) || [];
+    let cajaDiaria = JSON.parse(localStorage.getItem('caja_diaria')) || {};
+    let config = JSON.parse(localStorage.getItem('config_negocio')) || { 
+        nombre: "EL ALMACÉN DEL REPOSTERO", dir: "Sarmiento 2201", tel: "Marcos Paz", ig: "", fb: "" 
+    };
+
+    let carrito = [];
+    let filtro = "";
+    let metodoPago = "Efectivo";
+    let tempImg = ""; // Para la foto del producto
+    function intentarLogin() {
+        const p = document.getElementById('pass-login').value;
+        if (p === "Mupirata1" || p === "12345") {
+            if (p === "Mupirata1") {
+                document.getElementById('nav-inv').classList.remove('hidden');
+                document.getElementById('nav-fac').classList.remove('hidden');
+                document.getElementById('nav-gan').classList.remove('hidden');
             }
-        }
-
-        function showSection(s) {
-            const c = document.getElementById('main-content');
-            // Limpiamos el buscador al cambiar de sección para evitar confusiones
-            document.getElementById('buscador').value = "";
-            filtro = "";
-
-            if (s === 'pos') renderPOS(c);
-            else if (s === 'inventory') renderInventory(c);
-            else if (s === 'reports') renderReports(c);
-            else if (s === 'accounts') renderAccounts(c);
-            else if (s === 'totals') renderTotals(c);
-            else if (s === 'ganancias') renderGanancias(c);
-            else if (s === 'weekly') renderWeekly(c);
-            else if (s === 'pedidos') renderPedidos(c);
-            else if (s === 'config') renderConfig(c);
-        }
-      function renderPOS(c) {
-            c.innerHTML = `
-                <div class="flex gap-4 h-full">
-                    <div id="lista-v" class="flex-1 grid grid-cols-3 gap-3 content-start overflow-y-auto px-2"></div>
-                    
-                    <div class="w-80 bg-white p-6 rounded-3xl shadow-xl flex flex-col border font-black">
-                        <div id="cart" class="flex-1 overflow-y-auto space-y-2 mb-4 scrollbar-hide"></div>
-                        
-                        <input type="text" id="cli-f" placeholder="NOMBRE CLIENTE" class="hidden w-full p-2 border-2 border-orange-400 rounded-xl mb-4 text-center font-black uppercase">
-                        
-                        <div class="flex justify-between font-black text-3xl mb-4">
-                            <span>Total:</span>
-                            <span id="t-txt" class="text-blue-600">$0</span>
-                        </div>
-                        
-                        <div class="grid grid-cols-2 gap-2 mb-4">
-                            <div onclick="met='Efectivo';renderPOS(document.getElementById('main-content'))" class="btn-pago ${met === 'Efectivo' ? 'active-efectivo' : ''} font-black text-[10px] uppercase">Efectivo</div>
-                            <div onclick="met='Fiado';renderPOS(document.getElementById('main-content'))" class="btn-pago ${met === 'Fiado' ? 'active-fiado' : ''} font-black text-[10px] uppercase">Fiado</div>
-                        </div>
-                        
-                        <button onclick="cobrar(true)" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase mb-2 shadow-lg hover:bg-blue-700">Ticket</button>
-                        <button onclick="cobrar(false)" class="w-full bg-gray-800 text-white py-4 rounded-xl font-black uppercase shadow-lg hover:bg-black">Cobrar</button>
-                    </div>
-                </div>`;
-            
-            if (met === 'Fiado') document.getElementById('cli-f').classList.remove('hidden');
-            renderVentas();
-            updateCart();
-        }
-      function renderVentas() {
-            const f = productos.filter(p => p.nombre.toLowerCase().includes(filtro));
-            document.getElementById('lista-v').innerHTML = f.map(p => `
-                <div onclick="addCar(${p.id})" class="bg-white p-3 rounded-2xl border-2 hover:border-blue-400 cursor-pointer text-center shadow-sm transition-all active:scale-95">
-                    <h3 class="font-black text-[11px] uppercase truncate text-gray-700">${p.nombre}</h3>
-                    <p class="text-xl font-black text-blue-900">$${p.precio}</p>
-                </div>`).join('');
-        }
-
-        function addCar(id) {
-            const p = productos.find(x => x.id === id);
-            const e = carrito.find(x => x.id === id);
-            if (e) e.cant++;
-            else carrito.push({ ...p, cant: 1 });
-            updateCart();
-        }
-
-        function updateCart() {
-            const cDiv = document.getElementById('cart');
-            if (!cDiv) return;
-            cDiv.innerHTML = carrito.map((i, idx) => `
-                <div class="flex justify-between items-center bg-gray-50 p-2 rounded-xl text-[10px] border">
-                    <span class="truncate w-24 uppercase">${i.nombre}</span>
-                    <div class="flex items-center gap-1">
-                        <input type="number" step="0.001" value="${i.cant}" onchange="carrito[${idx}].cant=parseFloat(this.value);updateCart()" class="w-14 border text-center rounded-lg font-black">
-                        <button onclick="carrito.splice(${idx},1);updateCart()" class="text-red-500 font-black px-1 text-lg">×</button>
-                    </div>
-                </div>`).join('');
-            let total = carrito.reduce((s, i) => s + (i.precio * i.cant), 0);
-            document.getElementById('t-txt').innerText = "$" + total.toFixed(2);
-        }
-      function cobrar(imp) {
-            if (!carrito.length) return;
-            let total = carrito.reduce((s, i) => s + (i.precio * i.cant), 0);
-            let gana = carrito.reduce((s, i) => s + ((i.precio - (i.costo || 0)) * i.cant), 0);
-            let cli = "";
-
-            if (met === 'Fiado') {
-                cli = document.getElementById('cli-f').value.toUpperCase();
-                if (!cli) { alert("POR FAVOR INGRESA EL NOMBRE DEL CLIENTE"); return; }
-                cuentas[cli] = (cuentas[cli] || 0) + total;
-                localStorage.setItem('cuentas_corrientes', JSON.stringify(cuentas));
-            }
-
-            historial.push({
-                id: Date.now(),
-                fecha: new Date().toLocaleDateString(),
-                hora: new Date().toLocaleTimeString(),
-                total, ganancia: gana, met, cliente: cli,
-                items: [...carrito]
-            });
-            localStorage.setItem('historial_ventas', JSON.stringify(historial));
-
-            if (imp) {
-                const w = window.open('', '_blank');
-                w.document.write(`<html><body style="width:230px;text-align:center;font-family:sans-serif;font-weight:bold;">
-                    <div style="font-size:14px;margin-bottom:10px;">${config.nombre}</div>
-                    <hr>${carrito.map(i => `<div style="font-size:10px;display:flex;justify-content:space-between;"><span>${i.cant}x ${i.nombre}</span><span>$${(i.precio * i.cant).toFixed(2)}</span></div>`).join('')}<hr>
-                    <div style="font-size:12px;">TOTAL: $${total.toFixed(2)}</div>
-                    <div style="font-size:9px;margin-top:5px;">${met} ${cli}</div><hr>
-                    <div style="font-size:8px;">${config.tel ? 'TEL: ' + config.tel : ''}<br>¡GRACIAS POR SU COMPRA!</div>
-                    <script>window.print();window.close();<\/script></body></html>`);
-            }
-
-            carrito = [];
-            met = "Efectivo";
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('sidebar').classList.remove('hidden');
+            document.getElementById('main-area').classList.remove('hidden');
+            document.getElementById('ui-local-nombre').innerText = config.nombre;
             showSection('pos');
-        }
-      function renderInventory(c) {
-            c.innerHTML = `
-                <div class="bg-white p-6 rounded-3xl border mb-6 font-black max-w-2xl mx-auto shadow-sm">
-                    <h2 class="mb-4 text-blue-600">NUEVO PRODUCTO</h2>
-                    <div class="grid grid-cols-4 gap-2">
-                        <input type="text" id="in" placeholder="NOMBRE" class="border-2 p-3 rounded-xl uppercase outline-none focus:border-blue-400">
-                        <input type="number" id="ic" placeholder="COSTO" class="border-2 p-3 rounded-xl outline-none">
-                        <input type="number" id="ip" placeholder="VENTA" class="border-2 p-3 rounded-xl outline-none">
-                        <button onclick="saveP()" class="bg-blue-600 text-white rounded-xl font-black hover:bg-blue-700">GUARDAR</button>
-                    </div>
+        } else { alert("CONTRASEÑA INCORRECTA"); }
+    }
+
+    function showSection(s) {
+        const c = document.getElementById('main-content');
+        document.getElementById('buscador').value = "";
+        filtro = "";
+        if (s === 'pos') renderPOS(c);
+        else if (s === 'inventory') renderInventory(c);
+        else if (s === 'caja') renderCaja(c);
+        else if (s === 'facturacion') renderFacturacion(c);
+        else if (s === 'ganancias') renderGanancias(c);
+        else if (s === 'pedidos') renderPedidos(c);
+        else if (s === 'config') renderConfig(c);
+    }
+        function renderPOS(c) {
+        c.innerHTML = `
+        <div class="flex gap-4 h-full">
+            <div id="lista-prod" class="flex-1 grid grid-cols-3 gap-4 content-start overflow-y-auto pr-2"></div>
+            
+            <div class="w-96 bg-white p-6 rounded-[2.5rem] shadow-2xl flex flex-col border border-gray-100">
+                <h2 class="text-center font-black text-blue-600 mb-4 italic uppercase">Carrito de Compras</h2>
+                <div id="carrito-items" class="flex-1 overflow-y-auto space-y-2 mb-4 pr-2"></div>
+                
+                <div class="p-4 bg-yellow-50 rounded-2xl mb-4 border-2 border-yellow-100">
+                    <p class="text-[10px] font-black text-yellow-600 uppercase mb-1 text-center italic">Calculador de Vuelto</p>
+                    <input type="number" id="paga-con" oninput="calcularVuelto()" placeholder="¿CON CUÁNTO PAGA?" class="w-full p-2 rounded-xl text-center font-black text-2xl bg-white border-none outline-none">
+                    <p id="vuelto-txt" class="text-center text-green-600 font-black text-xl mt-2"></p>
                 </div>
-                <div id="l-inv" class="space-y-2 max-w-2xl mx-auto"></div>`;
-            renderInvList();
-        }
 
-        function renderInvList() {
-            document.getElementById('l-inv').innerHTML = productos.map((p, idx) => `
-                <div class="bg-white p-4 rounded-xl border flex justify-between font-black uppercase text-xs items-center shadow-sm">
-                    <span class="w-1/2 text-left">${p.nombre}</span>
-                    <div class="flex gap-4 items-center">
-                        <span class="text-gray-400">C:$${p.costo || 0}</span>
-                        <input type="number" value="${p.precio}" onchange="productos[${idx}].precio=parseFloat(this.value);localStorage.setItem('productos',JSON.stringify(productos))" class="w-20 border-2 rounded-lg p-1 text-center font-black focus:border-blue-400">
-                        <button onclick="if(confirm('¿BORRAR?')){productos.splice(${idx},1);localStorage.setItem('productos',JSON.stringify(productos));renderInvList()}" class="text-red-300 ml-2">X</button>
-                    </div>
-                </div>`).join('');
-        }
-
-        function saveP() {
-            let n = document.getElementById('in').value, c = document.getElementById('ic').value, p = document.getElementById('ip').value;
-            if (n && p) {
-                productos.push({ id: Date.now(), nombre: n.toUpperCase(), costo: parseFloat(c || 0), precio: parseFloat(p) });
-                localStorage.setItem('productos', JSON.stringify(productos));
-                renderInvList();
-                document.getElementById('in').value = ""; document.getElementById('ic').value = ""; document.getElementById('ip').value = "";
-            }
-        }
-
-        function renderReports(c) {
-            const h = historial.filter(v => v.fecha === new Date().toLocaleDateString());
-            c.innerHTML = `
-                <h2 class="text-2xl font-black text-blue-600 mb-6 text-center">AUDITORIA HOY</h2>
-                <div class="space-y-2 max-w-xl mx-auto">
-                    ${h.slice().reverse().map(v => `
-                        <div class="bg-white p-4 rounded-xl border flex justify-between items-center font-black text-xs shadow-sm">
-                            <span class="text-left">${v.hora}<br>${v.met} ${v.cliente}</span>
-                            <div class="flex items-center">
-                                <b class="text-lg mr-4">$${v.total.toFixed(2)}</b>
-                                <button onclick="borrarV(${v.id})" class="text-red-400 text-lg">×</button>
-                            </div>
-                        </div>`).join('')}
-                </div>`;
-        }
-
-        function borrarV(id) {
-            if (confirm("¿ANULAR ESTA VENTA?")) {
-                historial = historial.filter(v => v.id !== id);
-                localStorage.setItem('historial_ventas', JSON.stringify(historial));
-                showSection('reports');
-            }
-        }
-      function renderTotals(c) {
-            const f = new Date().toLocaleDateString();
-            const vH = historial.filter(v => v.fecha === f && !v.cliente.includes('(PAGO)')).reduce((s, v) => s + v.total, 0);
-            const pH = historial.filter(v => v.fecha === f && v.cliente.includes('(PAGO)')).reduce((s, v) => s + v.total, 0);
-            const gH = gastos.filter(g => g.fecha === f).reduce((s, g) => s + g.monto, 0);
-
-            c.innerHTML = `
-                <h2 class="text-2xl font-black text-blue-600 mb-6 uppercase text-center">TOTALES DIARIOS</h2>
-                <div class="grid grid-cols-2 gap-4 mb-6 max-w-lg mx-auto">
-                    <div class="bg-white p-6 rounded-3xl border shadow-xl">Ventas: <p class="text-2xl text-blue-600">$${vH.toFixed(2)}</p></div>
-                    <div class="bg-white p-6 rounded-3xl border shadow-xl">Entregas: <p class="text-2xl text-green-600">$${pH.toFixed(2)}</p></div>
-                    <div class="bg-white p-6 rounded-3xl border shadow-xl col-span-2">
-                        Gastos: <p class="text-2xl text-red-500">$${gH.toFixed(2)}</p>
-                        <button onclick="addGasto()" class="bg-red-500 text-white px-6 py-2 rounded-xl font-black mt-2 uppercase text-[10px] shadow-md hover:bg-red-600">+ CARGAR GASTO</button>
-                    </div>
+                <div class="flex justify-between items-end mb-4 px-2">
+                    <span class="font-black text-gray-400 uppercase text-xs">Total a Cobrar</span>
+                    <span id="total-txt" class="text-5xl font-black text-blue-900 leading-none">$0</span>
                 </div>
-                <div class="mt-4 p-4 bg-white rounded-2xl border text-left max-w-lg mx-auto">
-                    <h3 class="font-black text-gray-400 text-[10px] uppercase mb-2">Detalle de Gastos (Hoy):</h3>
-                    <div class="space-y-1">
-                        ${gastos.filter(g => g.fecha === f).map(g => `
-                            <div class="flex justify-between items-center text-[10px] font-black border-b pb-1">
-                                <span>${g.desc}</span>
-                                <div class="flex items-center gap-3"><span class="text-red-500">$${g.monto.toFixed(2)}</span><button onclick="borrarGasto(${g.id})" class="text-gray-300 hover:text-red-500">×</button></div>
-                            </div>`).join('')}
+
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <button onclick="metodoPago='Efectivo';renderPOS(document.getElementById('main-content'))" class="p-3 rounded-xl border-2 font-black text-xs uppercase ${metodoPago==='Efectivo'?'active-metodo':''}">Efectivo</button>
+                    <button onclick="metodoPago='Fiado';renderPOS(document.getElementById('main-content'))" class="p-3 rounded-xl border-2 font-black text-xs uppercase ${metodoPago==='Fiado'?'active-metodo':''}">Fiado</button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="cobrar(true)" class="bg-blue-600 text-white py-4 rounded-2xl font-black uppercase text-xs shadow-lg hover:bg-blue-700">Ticket PDF</button>
+                    <button onclick="cobrar(false)" class="bg-gray-800 text-white py-4 rounded-2xl font-black uppercase text-xs shadow-lg hover:bg-black">Solo Cobrar</button>
+                </div>
+            </div>
+        </div>`;
+        renderVentas();
+        updateCart();
+    }
+        function renderVentas() {
+        const f = productos.filter(p => p.nombre.toLowerCase().includes(filtro));
+        document.getElementById('lista-prod').innerHTML = f.map(p => `
+            <div onclick="addCar(${p.id})" class="bg-white p-3 rounded-3xl border-2 hover:border-blue-500 cursor-pointer shadow-sm transition-all active:scale-95 text-center">
+                ${p.img ? `<img src="${p.img}" class="w-full h-24 object-cover rounded-2xl mb-2">` : `<div class="w-full h-24 bg-gray-50 rounded-2xl mb-2 flex items-center justify-center"><i class="fas fa-box text-gray-200 text-3xl"></i></div>`}
+                <h3 class="font-black text-[11px] uppercase truncate text-gray-700">${p.nombre}</h3>
+                <p class="text-xl font-black text-blue-900">$${p.precio}</p>
+                <p class="text-[9px] font-bold text-gray-300 uppercase">Stock: ${p.stock || 0}</p>
+            </div>`).join('');
+    }
+
+    function addCar(id) {
+        const p = productos.find(x => x.id === id);
+        const e = carrito.find(x => x.id === id);
+        if (e) { e.cant++; } 
+        else { carrito.push({ ...p, cant: 1 }); }
+        updateCart();
+    }
+
+    function updateCart() {
+        const cDiv = document.getElementById('carrito-items');
+        if (!cDiv) return;
+        cDiv.innerHTML = carrito.map((i, idx) => `
+            <div class="flex justify-between items-center bg-gray-50 p-2 rounded-2xl border border-gray-100">
+                <div class="w-24"><p class="text-[9px] font-black uppercase truncate">${i.nombre}</p></div>
+                <div class="flex items-center gap-2">
+                    <input type="number" step="0.001" value="${i.cant}" onchange="carrito[${idx}].cant=parseFloat(this.value);updateCart()" class="w-14 p-1 border-2 rounded-lg text-center font-black text-xs outline-none focus:border-blue-400">
+                    <button onclick="carrito.splice(${idx},1);updateCart()" class="text-red-400 font-black text-lg px-1">×</button>
+                </div>
+            </div>`).join('');
+        const total = carrito.reduce((s, i) => s + (i.precio * i.cant), 0);
+        document.getElementById('total-txt').innerText = "$" + total.toFixed(2);
+        calcularVuelto();
+    }
+
+    function calcularVuelto() {
+        const t = carrito.reduce((s, i) => s + (i.precio * i.cant), 0);
+        const p = parseFloat(document.getElementById('paga-con').value);
+        const vTxt = document.getElementById('vuelto-txt');
+        if (p >= t) { vTxt.innerText = "VUELTO: $" + (p - t).toFixed(2); } 
+        else { vTxt.innerText = ""; }
+    }
+        async function cobrar(conTicket) {
+        if (!carrito.length) return;
+        const total = carrito.reduce((s, i) => s + (i.precio * i.cant), 0);
+        const gana = carrito.reduce((s, i) => s + ((i.precio - (i.costo || 0)) * i.cant), 0);
+        let cliente = "";
+
+        if (metodoPago === 'Fiado') {
+            cliente = prompt("NOMBRE DEL CLIENTE (CTA. CTE.):")?.toUpperCase();
+            if (!cliente) return;
+            cuentas[cliente] = (cuentas[cliente] || 0) + total;
+            localStorage.setItem('cuentas_corrientes', JSON.stringify(cuentas));
+        }
+
+        const venta = {
+            id: Date.now(),
+            fecha: new Date().toLocaleDateString(),
+            hora: new Date().toLocaleTimeString(),
+            total, ganancia: gana, metodo: metodoPago, cliente,
+            items: [...carrito]
+        };
+
+        historial.push(venta);
+        localStorage.setItem('historial_ventas', JSON.stringify(historial));
+
+        // Descontar Stock
+        carrito.forEach(item => {
+            const p = productos.find(x => x.id === item.id);
+            if (p) p.stock = (p.stock || 0) - item.cant;
+        });
+        localStorage.setItem('productos', JSON.stringify(productos));
+
+        if (conTicket) { generarTicketPDF(venta); }
+
+        carrito = [];
+        metodoPago = "Efectivo";
+        showSection('pos');
+    }
+
+    function generarTicketPDF(v) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'mm', format: [80, 150] }); // Formato ticket térmico
+        doc.setFontSize(10);
+        doc.text(config.nombre, 40, 10, { align: 'center' });
+        doc.setFontSize(7);
+        doc.text(config.dir, 40, 14, { align: 'center' });
+        doc.text("------------------------------------------", 40, 18, { align: 'center' });
+        
+        let y = 22;
+        v.items.forEach(i => {
+            doc.text(`${i.cant}x ${i.nombre}`, 5, y);
+            doc.text(`$${(i.precio * i.cant).toFixed(2)}`, 75, y, { align: 'right' });
+            y += 4;
+        });
+        
+        doc.text("------------------------------------------", 40, y + 2, { align: 'center' });
+        doc.setFontSize(10);
+        doc.text(`TOTAL: $${v.total.toFixed(2)}`, 75, y + 7, { align: 'right' });
+        doc.setFontSize(7);
+        doc.text(`Pago: ${v.metodo} ${v.cliente}`, 5, y + 12);
+        doc.text(v.fecha + " " + v.hora, 5, y + 16);
+        doc.save(`Ticket_${v.id}.pdf`);
+    }
+        function renderInventory(c) {
+        c.innerHTML = `
+        <div class="bg-white p-6 rounded-[2.5rem] border shadow-xl mb-6 max-w-4xl mx-auto">
+            <h2 class="font-black text-blue-600 mb-4 uppercase italic text-center">Gestión de Productos</h2>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                <div class="flex flex-col items-center">
+                    <div id="img-prev" class="w-16 h-16 bg-gray-100 rounded-xl mb-2 flex items-center justify-center border-2 border-dashed border-gray-300 overflow-hidden">
+                        <i class="fas fa-camera text-gray-400"></i>
                     </div>
+                    <label class="text-[9px] bg-blue-50 text-blue-600 px-2 py-1 rounded-lg cursor-pointer font-black uppercase">
+                        Foto <input type="file" class="hidden" onchange="procesarFoto(event)">
+                    </label>
                 </div>
-                <div class="mt-8"><h3 class="font-black text-green-600 text-5xl">CAJA: $${(vH + pH - gH).toFixed(2)}</h3></div>`;
-        }
+                <input type="text" id="inv-nom" placeholder="NOMBRE" class="p-3 border-2 rounded-xl font-black uppercase text-xs outline-none focus:border-blue-400">
+                <input type="number" id="inv-costo" placeholder="COSTO" class="p-3 border-2 rounded-xl font-black text-xs outline-none focus:border-blue-400">
+                <input type="number" id="inv-venta" placeholder="VENTA" class="p-3 border-2 rounded-xl font-black text-xs outline-none focus:border-blue-400">
+                <input type="number" id="inv-stock" placeholder="STOCK" class="p-3 border-2 rounded-xl font-black text-xs outline-none focus:border-blue-400">
+                <button onclick="guardarProducto()" class="bg-blue-600 text-white p-4 rounded-xl font-black uppercase text-xs shadow-md hover:bg-blue-700 col-span-1">Guardar</button>
+            </div>
+        </div>
+        <div id="inventario-lista" class="space-y-2 max-w-4xl mx-auto pb-10"></div>`;
+        renderInventarioLista();
+    }
 
-        function addGasto() {
-            let d = prompt("CONCEPTO DEL GASTO:");
-            let m = prompt("MONTO $:");
-            if (d && m && !isNaN(parseFloat(m))) {
-                gastos.push({ id: Date.now(), fecha: new Date().toLocaleDateString(), desc: d.toUpperCase(), monto: parseFloat(m) });
-                localStorage.setItem('gastos', JSON.stringify(gastos));
-                showSection('totals');
-            }
+    function procesarFoto(ev) {
+        const file = ev.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                tempImg = e.target.result;
+                document.getElementById('img-prev').innerHTML = `<img src="${tempImg}" class="w-full h-full object-cover">`;
+            };
+            reader.readAsDataURL(file);
         }
+    }
+        function renderInventarioLista() {
+        const div = document.getElementById('inventario-lista');
+        if (!div) return;
+        div.innerHTML = productos.map((p, idx) => `
+        <div class="bg-white p-3 rounded-2xl border flex justify-between items-center shadow-sm">
+            <div class="flex items-center gap-3 w-1/3">
+                <img src="${p.img || ''}" class="w-10 h-10 rounded-lg object-cover bg-gray-50">
+                <span class="font-black text-[11px] uppercase truncate">${p.nombre}</span>
+            </div>
+            <div class="flex gap-2 items-center">
+                <div class="flex flex-col"><span class="text-[8px] text-gray-400 font-bold">COSTO</span><input type="number" id="c-${p.id}" value="${p.costo}" class="w-16 border rounded p-1 text-center font-black text-xs"></div>
+                <div class="flex flex-col"><span class="text-[8px] text-gray-400 font-bold">VENTA</span><input type="number" id="v-${p.id}" value="${p.precio}" class="w-16 border-2 border-blue-100 rounded p-1 text-center font-black text-xs"></div>
+                <div class="flex flex-col"><span class="text-[8px] text-gray-400 font-bold">STOCK</span><input type="number" id="s-${p.id}" value="${p.stock}" class="w-16 border rounded p-1 text-center font-black text-xs"></div>
+                
+                <button onclick="actualizarProducto(${p.id})" class="text-green-500 text-xl ml-2"><i class="fas fa-check-circle"></i></button>
+                <button onclick="eliminarProducto(${idx})" class="text-red-200 hover:text-red-500 text-xl ml-2"><i class="fas fa-times-circle"></i></button>
+            </div>
+        </div>`).reverse().join('');
+    }
 
-        function borrarGasto(id) {
-            if (confirm("¿BORRAR GASTO?")) {
-                gastos = gastos.filter(g => g.id !== id);
-                localStorage.setItem('gastos', JSON.stringify(gastos));
-                showSection('totals');
-            }
+    function guardarProducto() {
+        const n = document.getElementById('inv-nom').value;
+        const c = parseFloat(document.getElementById('inv-costo').value) || 0;
+        const v = parseFloat(document.getElementById('inv-venta').value) || 0;
+        const s = parseFloat(document.getElementById('inv-stock').value) || 0;
+        if (n && v) {
+            productos.push({ id: Date.now(), nombre: n.toUpperCase(), costo: c, precio: v, stock: s, img: tempImg });
+            localStorage.setItem('productos', JSON.stringify(productos));
+            tempImg = "";
+            renderInventory(document.getElementById('main-content'));
         }
-      function renderAccounts(c) {
-            c.innerHTML = `<h2 class="text-2xl font-black text-orange-600 mb-6 text-center uppercase">CUENTAS CORRIENTES</h2>
-                <div id="pago-form" class="hidden mb-6 bg-blue-50 p-6 rounded-2xl border-2 border-blue-200 max-w-sm mx-auto">
-                    <input type="number" id="m-pago" placeholder="MONTO $" class="p-3 rounded-xl border-2 w-full mb-2 text-center font-black">
-                    <button onclick="confPago()" class="bg-blue-600 text-white w-full py-3 rounded-xl font-black">CONFIRMAR ENTREGA</button>
+    }
+
+    function actualizarProducto(id) {
+        const p = productos.find(x => x.id === id);
+        p.costo = parseFloat(document.getElementById(`c-${id}`).value);
+        p.precio = parseFloat(document.getElementById(`v-${id}`).value);
+        p.stock = parseFloat(document.getElementById(`s-${id}`).value);
+        localStorage.setItem('productos', JSON.stringify(productos));
+        alert("PRODUCTO ACTUALIZADO");
+    }
+
+    function eliminarProducto(idx) {
+        if (confirm("¿ELIMINAR PRODUCTO?")) {
+            productos.splice(idx, 1);
+            localStorage.setItem('productos', JSON.stringify(productos));
+            renderInventarioLista();
+        }
+    }
+        function renderCaja(c) {
+        const hoy = new Date().toLocaleDateString();
+        const ingresos = historial.filter(v => v.fecha === hoy && v.metodo === 'Efectivo').reduce((s, v) => s + v.total, 0);
+        const egresos = gastos.filter(g => g.fecha === hoy).reduce((s, g) => s + g.monto, 0);
+        const inicial = cajaDiaria[hoy] || 0;
+
+        c.innerHTML = `
+        <h2 class="text-2xl font-black text-green-600 mb-6 uppercase italic text-center">Caja Diaria</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 max-w-4xl mx-auto">
+            <div class="bg-white p-6 rounded-3xl border shadow-lg text-center">
+                <p class="text-[10px] font-black text-gray-400 uppercase">Caja Inicial (Efectivo)</p>
+                <input type="number" id="caja-ini" value="${inicial}" class="text-3xl font-black text-blue-600 w-full text-center border-none outline-none">
+                <button onclick="guardarCajaIni()" class="mt-2 text-[10px] bg-blue-600 text-white px-4 py-1 rounded-full font-black">FIJAR INICIO</button>
+            </div>
+            <div class="bg-white p-6 rounded-3xl border shadow-lg text-center">
+                <p class="text-[10px] font-black text-gray-400 uppercase">Ventas Hoy (Efectivo)</p>
+                <p class="text-3xl font-black text-green-600">$${ingresos.toFixed(2)}</p>
+            </div>
+            <div class="bg-white p-6 rounded-3xl border shadow-lg text-center">
+                <p class="text-[10px] font-black text-gray-400 uppercase">Gastos Hoy</p>
+                <p class="text-3xl font-black text-red-500">$${egresos.toFixed(2)}</p>
+            </div>
+        </div>
+
+        <div class="bg-white p-8 rounded-[2.5rem] border shadow-xl max-w-xl mx-auto text-center mb-6">
+            <h3 class="text-xs font-black text-gray-400 uppercase mb-4 italic">Cargar Gasto</h3>
+            <div class="flex gap-2">
+                <input type="text" id="g-desc" placeholder="DESCRIPCIÓN" class="flex-1 p-3 border-2 rounded-xl font-black uppercase text-xs">
+                <input type="number" id="g-monto" placeholder="$" class="w-24 p-3 border-2 rounded-xl font-black text-xs">
+                <button onclick="guardarGasto()" class="bg-red-500 text-white px-6 rounded-xl font-black">OK</button>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <p class="text-gray-400 font-black uppercase text-xs mb-1">Efectivo Total en Caja</p>
+            <h3 class="text-6xl font-black text-blue-900">$${(inicial + ingresos - egresos).toFixed(2)}</h3>
+        </div>`;
+    }
+
+    function guardarCajaIni() {
+        const hoy = new Date().toLocaleDateString();
+        const m = parseFloat(document.getElementById('caja-ini').value) || 0;
+        cajaDiaria[hoy] = m;
+        localStorage.setItem('caja_diaria', JSON.stringify(cajaDiaria));
+        alert("CAJA INICIAL GUARDADA");
+    }
+
+    function guardarGasto() {
+        const d = document.getElementById('g-desc').value;
+        const m = parseFloat(document.getElementById('g-monto').value);
+        if (d && m) {
+            gastos.push({ id: Date.now(), fecha: new Date().toLocaleDateString(), desc: d.toUpperCase(), monto: m });
+            localStorage.setItem('gastos', JSON.stringify(gastos));
+            showSection('caja');
+        }
+    }
+        function renderFacturacion(c) {
+        const hoy = new Date().toLocaleDateString();
+        const ventasHoy = historial.filter(v => v.fecha === hoy);
+        
+        c.innerHTML = `
+        <h2 class="text-2xl font-black text-blue-600 mb-6 uppercase italic text-center">Registro de Facturación</h2>
+        <div class="bg-blue-600 text-white p-6 rounded-3xl mb-6 text-center max-w-sm mx-auto shadow-lg">
+            <p class="text-[10px] font-black uppercase opacity-80">Facturas Emitidas Hoy</p>
+            <p class="text-5xl font-black">${ventasHoy.length}</p>
+        </div>
+        <div class="space-y-3 max-w-4xl mx-auto pb-10">
+            ${ventasHoy.slice().reverse().map(v => `
+            <div class="bg-white p-4 rounded-2xl border flex justify-between items-center shadow-sm">
+                <div class="text-left">
+                    <p class="text-[10px] font-black text-gray-400">${v.hora} - ${v.metodo} ${v.cliente ? '('+v.cliente+')' : ''}</p>
+                    <p class="text-xs font-bold text-blue-600 uppercase">${v.items.map(i => i.cant + 'x ' + i.nombre).join(' | ')}</p>
                 </div>
-                <div class="grid grid-cols-2 gap-4 max-w-2xl mx-auto">${Object.entries(cuentas).map(([n, d]) => d > 0 ? `<div class="bg-white p-6 rounded-3xl border shadow-sm text-center font-black"><h3 class="uppercase text-blue-900">${n}</h3><p class="text-3xl text-red-600 my-2">$${d.toFixed(2)}</p><button onclick="document.getElementById('pago-form').classList.remove('hidden');window.cliP='${n}'" class="bg-green-500 text-white px-4 py-2 rounded-xl text-xs uppercase shadow-md">ENTREGA PAGO</button></div>` : '').join('')}</div>`;
-        }
+                <div class="flex items-center gap-6">
+                    <span class="text-xl font-black text-gray-800">$${v.total.toFixed(2)}</span>
+                    <button onclick="anularVenta(${v.id})" class="text-red-300 hover:text-red-500 text-xl"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </div>`).join('')}
+        </div>`;
+    }
 
-        function confPago() {
-            let m = parseFloat(document.getElementById('m-pago').value), n = window.cliP;
-            if (!isNaN(m)) {
-                historial.push({ id: Date.now(), fecha: new Date().toLocaleDateString(), hora: new Date().toLocaleTimeString(), total: m, ganancia: m, met: 'Efectivo', cliente: n + ' (PAGO)' });
-                cuentas[n] -= m;
-                localStorage.setItem('cuentas_corrientes', JSON.stringify(cuentas));
-                localStorage.setItem('historial_ventas', JSON.stringify(historial));
-                showSection('accounts');
-            }
+    function anularVenta(id) {
+        if (confirm("¿ANULAR ESTA VENTA Y DEVOLVER STOCK?")) {
+            const v = historial.find(x => x.id === id);
+            v.items.forEach(item => {
+                const p = productos.find(x => x.id === item.id);
+                if (p) p.stock = (p.stock || 0) + item.cant;
+            });
+            historial = historial.filter(x => x.id !== id);
+            localStorage.setItem('historial_ventas', JSON.stringify(historial));
+            localStorage.setItem('productos', JSON.stringify(productos));
+            showSection('facturacion');
         }
-
+    }
         function renderGanancias(c) {
-            const f = new Date().toLocaleDateString(), gH = historial.filter(v => v.fecha === f).reduce((s, v) => s + v.ganancia, 0);
-            c.innerHTML = `<h2 class="text-2xl font-black text-green-600 mb-6 uppercase text-center">GANANCIAS</h2><div class="bg-white p-10 rounded-[3rem] border shadow-xl text-center max-w-sm mx-auto"><p class="text-gray-400 uppercase text-xs">Hoy</p><p class="text-6xl text-green-600">$${gH.toFixed(2)}</p></div>`;
-        }
+        const hoy = new Date();
+        const fHoy = hoy.toLocaleDateString();
+        
+        const gDia = historial.filter(v => v.fecha === fHoy).reduce((s, v) => s + v.ganancia, 0);
+        
+        const unaSemana = new Date(); unaSemana.setDate(hoy.getDate() - 7);
+        const gSem = historial.filter(v => new Date(v.id) >= unaSemana).reduce((s, v) => s + v.ganancia, 0);
+        
+        const unMes = new Date(); unMes.setMonth(hoy.getMonth() - 1);
+        const gMes = historial.filter(v => new Date(v.id) >= unMes).reduce((s, v) => s + v.ganancia, 0);
 
+        c.innerHTML = `
+        <h2 class="text-2xl font-black text-green-600 mb-8 uppercase italic text-center">Análisis de Ganancias</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto text-center font-black">
+            <div class="bg-white p-8 rounded-[2.5rem] border-b-8 border-green-500 shadow-xl">
+                <p class="text-gray-400 text-xs uppercase mb-2">Hoy</p>
+                <p class="text-4xl text-green-600">$${gDia.toFixed(2)}</p>
+            </div>
+            <div class="bg-white p-8 rounded-[2.5rem] border-b-8 border-blue-500 shadow-xl">
+                <p class="text-gray-400 text-xs uppercase mb-2">Últimos 7 Días</p>
+                <p class="text-4xl text-blue-600">$${gSem.toFixed(2)}</p>
+            </div>
+            <div class="bg-white p-8 rounded-[2.5rem] border-b-8 border-purple-500 shadow-xl">
+                <p class="text-gray-400 text-xs uppercase mb-2">Últimos 30 Días</p>
+                <p class="text-4xl text-purple-600">$${gMes.toFixed(2)}</p>
+            </div>
+        </div>`;
+    }
+        function renderPedidos(c) {
+        c.innerHTML = `
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white p-8 rounded-[2.5rem] border shadow-xl mb-10">
+                <h2 class="text-xl font-black text-purple-600 mb-6 uppercase text-center italic">Nuevo Pedido</h2>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <input type="text" id="p-cli" placeholder="CLIENTE" class="p-4 border-2 rounded-2xl font-black uppercase text-center outline-none">
+                    <input type="date" id="p-fec" class="p-4 border-2 rounded-2xl font-black text-center outline-none">
+                </div>
+                <textarea id="p-det" placeholder="MERCADERÍA PEDIDA Y DETALLES..." class="w-full p-4 border-2 rounded-2xl font-black uppercase text-center h-24 mb-4 outline-none"></textarea>
+                <button onclick="guardarPedido()" class="w-full bg-purple-600 text-white py-5 rounded-[2rem] font-black uppercase shadow-lg">Confirmar Pedido</button>
+            </div>
+            <div id="pedidos-lista" class="space-y-4"></div>
+        </div>`;
+        renderPedidosLista();
+    }
+
+    function renderPedidosLista() {
+        const div = document.getElementById('pedidos-lista');
+        if (!div) return;
+        div.innerHTML = pedidos.map((p, idx) => `
+        <div class="bg-white p-6 rounded-[2rem] border shadow-sm flex justify-between items-center border-l-8 border-purple-500">
+            <div class="text-left">
+                <p class="text-[10px] font-black text-purple-400 uppercase italic">Entrega: ${p.fecha}</p>
+                <p class="text-xl font-black uppercase text-gray-800">${p.cliente}</p>
+                <p class="text-sm font-bold text-gray-500 uppercase italic">${p.detalle}</p>
+            </div>
+            <button onclick="pedidos.splice(${idx},1);localStorage.setItem('pedidos_repostero',JSON.stringify(pedidos));renderPedidosLista()" class="text-green-500 text-4xl hover:scale-110 transition-all"><i class="fas fa-check-circle"></i></button>
+        </div>`).join('');
+    }
+
+    function guardarPedido() {
+        const c = document.getElementById('p-cli').value, f = document.getElementById('p-fec').value, d = document.getElementById('p-det').value;
+        if (c && f && d) {
+            pedidos.push({ cliente: c.toUpperCase(), fecha: f, detalle: d.toUpperCase() });
+            pedidos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+            localStorage.setItem('pedidos_repostero', JSON.stringify(pedidos));
+            showSection('pedidos');
+        }
+    }
         function renderConfig(c) {
-            c.innerHTML = `<div class="bg-white p-10 rounded-3xl border max-w-md mx-auto text-center font-black"><h2>CONFIGURACION</h2><input id="cn" value="${config.nombre}" class="w-full border-2 p-3 rounded-xl mb-2 uppercase text-center font-black"><input id="ct" placeholder="TEL" value="${config.tel}" class="w-full border-2 p-3 rounded-xl mb-2 text-center font-black"><button onclick="config.nombre=document.getElementById('cn').value.toUpperCase();config.tel=document.getElementById('ct').value;localStorage.setItem('config_negocio',JSON.stringify(config));location.reload()" class="bg-blue-600 text-white w-full py-4 rounded-xl font-black">GUARDAR</button></div>`;
-        }
+        c.innerHTML = `
+        <div class="bg-white p-10 rounded-[3rem] border shadow-xl max-w-xl mx-auto text-center font-black">
+            <h2 class="text-2xl text-blue-600 mb-8 uppercase italic leading-tight">Datos del Local</h2>
+            <div class="space-y-4">
+                <input id="c-nom" value="${config.nombre}" class="w-full p-4 border-2 rounded-2xl text-center font-black uppercase" placeholder="NOMBRE DEL LOCAL">
+                <input id="c-dir" value="${config.dir}" class="w-full p-4 border-2 rounded-2xl text-center font-bold" placeholder="DIRECCIÓN">
+                <input id="c-tel" value="${config.tel}" class="w-full p-4 border-2 rounded-2xl text-center font-bold" placeholder="TELÉFONO">
+                <div class="grid grid-cols-2 gap-4">
+                    <input id="c-ig" value="${config.ig}" class="p-4 border-2 rounded-2xl text-center font-bold text-xs" placeholder="INSTAGRAM">
+                    <input id="c-fb" value="${config.fb}" class="p-4 border-2 rounded-2xl text-center font-bold text-xs" placeholder="FACEBOOK">
+                </div>
+                <button onclick="guardarConfig()" class="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black uppercase shadow-lg">Guardar Cambios</button>
+                <button onclick="respaldarDatos()" class="w-full bg-gray-800 text-white py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest mt-4">Descargar Respaldo de Seguridad</button>
+            </div>
+        </div>`;
+    }
 
-        function renderWeekly(c) { c.innerHTML = `<h2 class="text-3xl font-black mb-8 uppercase text-center">Ranking</h2><p class="text-gray-400">Próximamente versión completa.</p>`; }
-        function renderPedidos(c) { c.innerHTML = `<h2 class="text-3xl font-black mb-8 uppercase text-center">Pedidos</h2><p class="text-gray-400">Próximamente versión completa.</p>`; }
-    </script>
+    function guardarConfig() {
+        config = {
+            nombre: document.getElementById('c-nom').value.toUpperCase(),
+            dir: document.getElementById('c-dir').value,
+            tel: document.getElementById('c-tel').value,
+            ig: document.getElementById('c-ig').value,
+            fb: document.getElementById('c-fb').value
+        };
+        localStorage.setItem('config_negocio', JSON.stringify(config));
+        location.reload();
+    }
+        function respaldarDatos() {
+        const data = { productos, historial, gastos, cuentas, pedidos, cajaDiaria, config };
+        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `Respaldo_Almacen_${new Date().toLocaleDateString()}.json`;
+        a.click();
+    }
+</script>
 </body>
 </html>
