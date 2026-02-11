@@ -111,6 +111,11 @@ function showSection(s) {
                 b.click(); 
             }
         }, 200);
+    // Esto va adentro de showSection, al final de la función
+    setTimeout(() => {
+        const b = document.getElementById('buscador');
+        if (b) b.focus();
+    }, 200);
     }
       function renderPOS(c) {
         c.innerHTML = `
@@ -328,13 +333,13 @@ function showSection(s) {
         alert("PRODUCTO ACTUALIZADO");
     }
 
-    function eliminarProducto(idx) {
-        if (confirm("¿ELIMINAR PRODUCTO?")) {
-            productos.splice(idx, 1);
-            localStorage.setItem('productos', JSON.stringify(productos));
-            renderInventarioLista();
-        }
+   function eliminarProducto(idx) {
+    if (confirm("¿ELIMINAR PRODUCTO?")) {
+        productos.splice(idx, 1);
+        localStorage.setItem('productos', JSON.stringify(productos));
+        renderInventarioLista(); // Esto refresca la lista ahí mismo
     }
+}
         function renderCaja(c) {
         const hoy = new Date().toLocaleDateString();
         const ingresos = historial.filter(v => v.fecha === hoy && v.metodo === 'Efectivo').reduce((s, v) => s + v.total, 0);
@@ -404,13 +409,13 @@ function showSection(s) {
         }
     }
 
-    function eliminarGasto(id) {
-        if(confirm("¿BORRAR ESTE GASTO?")) {
-            gastos = gastos.filter(g => g.id !== id);
-            localStorage.setItem('gastos', JSON.stringify(gastos));
-            showSection('caja');
-        }
+   function eliminarGasto(id) {
+    if(confirm("¿BORRAR ESTE GASTO?")) {
+        gastos = gastos.filter(g => g.id !== id);
+        localStorage.setItem('gastos', JSON.stringify(gastos));
+        showSection('caja'); // Refresca la caja y devuelve el foco
     }
+}
      // --- PARTE 13: FACTURACIÓN Y ANULACIÓN ---
     function renderFacturacion(c) {
         const hoy = new Date().toLocaleDateString();
@@ -444,25 +449,21 @@ function showSection(s) {
         </div>`;
     }
 
-    function anularVenta(id) {
-        if (confirm("¿ESTÁS SEGURO DE ANULAR ESTA VENTA? EL STOCK VOLVERÁ AL INVENTARIO.")) {
-            const indexVenta = historial.findIndex(v => v.id === id);
-            if (indexVenta !== -1) {
-                const venta = historial[indexVenta];
-                // Devolvemos stock
-                venta.items.forEach(item => {
-                    const p = productos.find(x => x.id === item.id);
-                    if (p) p.stock = (p.stock || 0) + item.cant;
-                });
-                // Borramos y guardamos
-                historial.splice(indexVenta, 1);
-                localStorage.setItem('historial_ventas', JSON.stringify(historial));
-                localStorage.setItem('productos', JSON.stringify(productos));
-                // Refrescamos la pantalla
-                showSection('facturacion');
-            }
+  function anularVenta(id) {
+    if (confirm("¿ANULAR VENTA Y DEVOLVER STOCK?")) {
+        const v = historial.find(x => x.id === id);
+        if (v) {
+            v.items.forEach(i => {
+                const p = productos.find(x => x.id === i.id);
+                if (p) p.stock = (p.stock || 0) + i.cant;
+            });
+            historial = historial.filter(x => x.id !== id);
+            localStorage.setItem('historial_ventas', JSON.stringify(historial));
+            localStorage.setItem('productos', JSON.stringify(productos));
+            showSection('facturacion'); // Refresca y devuelve el foco
         }
     }
+}
 
     function reimprimirFactura(id) {
         const v = historial.find(x => x.id === id);
@@ -578,6 +579,33 @@ function showSection(s) {
         a.download = `Respaldo_Almacen_${new Date().toLocaleDateString()}.json`;
         a.click();
     }
+      // --- PARCHE MAESTRO PARA EL CURSOR ---
+const recuperarFoco = () => {
+    setTimeout(() => {
+        const b = document.getElementById('buscador');
+        if (b) {
+            b.focus();
+            b.click(); // Doble seguridad para Electron
+        }
+    }, 300);
+};
+
+// Sobreescribimos los carteles de Windows para que devuelvan el foco
+const originalAlert = window.alert;
+window.alert = function(msg) {
+    originalAlert(msg);
+    recuperarFoco();
+};
+
+const originalConfirm = window.confirm;
+window.confirm = function(msg) {
+    const res = originalConfirm(msg);
+    recuperarFoco();
+    return res;
+};
+
+// Si hacés doble clic en el fondo, el cursor vuelve
+window.ondblclick = recuperarFoco;  
 </script>
 </body>
 </html>
