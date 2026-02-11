@@ -334,11 +334,11 @@ function showSection(s) {
     }
 
    function eliminarProducto(idx) {
-    if (confirm("¿ELIMINAR PRODUCTO?")) {
+    confirmacionSegura("¿ELIMINAR ESTE PRODUCTO?", () => {
         productos.splice(idx, 1);
         localStorage.setItem('productos', JSON.stringify(productos));
-        renderInventarioLista(); // Esto refresca la lista ahí mismo
-    }
+        renderInventarioLista();
+    });
 }
         function renderCaja(c) {
         const hoy = new Date().toLocaleDateString();
@@ -410,11 +410,11 @@ function showSection(s) {
     }
 
    function eliminarGasto(id) {
-    if(confirm("¿BORRAR ESTE GASTO?")) {
+    confirmacionSegura("¿BORRAR ESTE GASTO?", () => {
         gastos = gastos.filter(g => g.id !== id);
         localStorage.setItem('gastos', JSON.stringify(gastos));
-        showSection('caja'); // Refresca la caja y devuelve el foco
-    }
+        showSection('caja');
+    });
 }
      // --- PARTE 13: FACTURACIÓN Y ANULACIÓN ---
     function renderFacturacion(c) {
@@ -450,7 +450,7 @@ function showSection(s) {
     }
 
   function anularVenta(id) {
-    if (confirm("¿ANULAR VENTA Y DEVOLVER STOCK?")) {
+    confirmacionSegura("¿ANULAR VENTA Y DEVOLVER STOCK?", () => {
         const v = historial.find(x => x.id === id);
         if (v) {
             v.items.forEach(i => {
@@ -460,9 +460,9 @@ function showSection(s) {
             historial = historial.filter(x => x.id !== id);
             localStorage.setItem('historial_ventas', JSON.stringify(historial));
             localStorage.setItem('productos', JSON.stringify(productos));
-            showSection('facturacion'); // Refresca y devuelve el foco
+            showSection('facturacion');
         }
-    }
+    });
 }
 
     function reimprimirFactura(id) {
@@ -580,32 +580,32 @@ function showSection(s) {
         a.click();
     }
       // --- PARCHE MAESTRO PARA EL CURSOR ---
-const recuperarFoco = () => {
-    setTimeout(() => {
-        const b = document.getElementById('buscador');
-        if (b) {
-            b.focus();
-            b.click(); // Doble seguridad para Electron
-        }
-    }, 300);
-};
+function confirmacionSegura(mensaje, accion) {
+    // Creamos el cartel nosotros mismos para que no se pierda el cursor
+    const modal = document.createElement('div');
+    modal.className = 'modal-alerta';
+    modal.innerHTML = `
+        <div class="alerta-caja">
+            <p class="font-black text-blue-900 uppercase mb-6">${mensaje}</p>
+            <div class="flex gap-4">
+                <button id="btn-si" class="flex-1 bg-red-500 text-white py-3 rounded-xl font-black uppercase">Sí, seguro</button>
+                <button id="btn-no" class="flex-1 bg-gray-200 text-gray-600 py-3 rounded-xl font-black uppercase">No</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
 
-// Sobreescribimos los carteles de Windows para que devuelvan el foco
-const originalAlert = window.alert;
-window.alert = function(msg) {
-    originalAlert(msg);
-    recuperarFoco();
-};
+    document.getElementById('btn-si').onclick = () => {
+        accion(); // Ejecuta la función (borrar, anular, etc)
+        modal.remove();
+        setTimeout(() => document.getElementById('buscador').focus(), 100);
+    };
 
-const originalConfirm = window.confirm;
-window.confirm = function(msg) {
-    const res = originalConfirm(msg);
-    recuperarFoco();
-    return res;
-};
-
-// Si hacés doble clic en el fondo, el cursor vuelve
-window.ondblclick = recuperarFoco;  
+    document.getElementById('btn-no').onclick = () => {
+        modal.remove();
+        setTimeout(() => document.getElementById('buscador').focus(), 100);
+    };
+}
 </script>
 </body>
 </html>
