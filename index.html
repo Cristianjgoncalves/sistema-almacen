@@ -411,7 +411,8 @@ function showSection(s) {
             showSection('caja');
         }
     }
-      function renderFacturacion(c) {
+     // --- PARTE 13: FACTURACIÓN Y ANULACIÓN ---
+    function renderFacturacion(c) {
         const hoy = new Date().toLocaleDateString();
         const ventasHoy = historial.filter(v => v.fecha === hoy);
         
@@ -430,22 +431,47 @@ function showSection(s) {
                 </div>
                 <div class="flex items-center gap-4">
                     <span class="text-xl text-gray-800">$${v.total.toFixed(2)}</span>
-                    <button onclick="reimprimirFactura(${v.id})" class="text-blue-500 text-xl p-2 hover:bg-blue-50 rounded-full" title="Reimprimir Ticket">
+                    
+                    <button onclick="reimprimirFactura(${v.id})" class="text-blue-500 text-xl p-2 hover:bg-blue-50 rounded-full">
                         <i class="fas fa-print"></i>
                     </button>
-                    <button onclick="anularVenta(${v.id})" class="text-red-300 hover:text-red-500 text-xl p-2"><i class="fas fa-trash-alt"></i></button>
+
+                    <button onclick="anularVenta(${v.id})" class="text-red-400 hover:text-red-600 text-xl p-2">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
                 </div>
             </div>`).join('')}
         </div>`;
+    }
+
+    function anularVenta(id) {
+        if (confirm("¿ESTÁS SEGURO DE ANULAR ESTA VENTA? EL STOCK VOLVERÁ AL INVENTARIO.")) {
+            const indexVenta = historial.findIndex(v => v.id === id);
+            if (indexVenta !== -1) {
+                const venta = historial[indexVenta];
+                // Devolvemos stock
+                venta.items.forEach(item => {
+                    const p = productos.find(x => x.id === item.id);
+                    if (p) p.stock = (p.stock || 0) + item.cant;
+                });
+                // Borramos y guardamos
+                historial.splice(indexVenta, 1);
+                localStorage.setItem('historial_ventas', JSON.stringify(historial));
+                localStorage.setItem('productos', JSON.stringify(productos));
+                // Refrescamos la pantalla
+                showSection('facturacion');
+            }
+        }
     }
 
     function reimprimirFactura(id) {
         const v = historial.find(x => x.id === id);
         if (v) {
             generarTicketPDF(v);
-            alert("TICKET RE-GENERADO");
         }
     }
+
+  
         function renderGanancias(c) {
         const hoy = new Date();
         const fHoy = hoy.toLocaleDateString();
